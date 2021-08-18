@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -14,17 +15,17 @@
 # ---
 
 # + tags=[]
+import numpy as np
 import pandas as pd
+
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 plt.style.use('ggplot')
-# sns.set_style("darkgrid")
+
 from sklearn.feature_extraction.text import CountVectorizer    # 
 from wordcloud import WordCloud                                # Generate word clouds
-import re  # Regexes
+
 from tqdm import tqdm  # Progress bar
-from nltk.tokenize import word_tokenize  # Tokenize words
 
 # Stopwords (common words)
 # nltk.download('stopwords')  # Stopwords must be downloaded
@@ -35,31 +36,50 @@ from nltk.corpus import stopwords
 
 # We read in and inspect the data
 
+# The training data rows contain a `keyword`, a `location` (sometimes not present), `text` containg a tweet and a `target` coding 1 for disaster and 0 for non-disaster.
+#
+# The training data contains 7613 observations, while the test data contains 3263 observations.
+
 # + tags=[]
 tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
 test=pd.read_csv('./input/nlp-getting-started/test.csv')
 # -
 
-# We inspect ten random tweets
+tweet.iloc[200]
+
+tweet.iloc[200:203]
+
+# Location does not seem trustworthy.
+
+print(tweet.shape)
+print(test.shape)
+
+# By inspecting a few tweets we see that we need to clean the text before we can analyze it.
 
 # + tags=[]
 for i in [677, 2643, 3134, 92, 2290, 2062, 3681, 2343, 2384, 323]:
     print(str(tweet.iloc[i]["target"]) + ": " + tweet.iloc[i]["text"])
-
-# + tags=[]
-tweet[tweet['target'] == 0].sample(4)
 # -
 
-# ## What do the keywords mean?
+# We see that
+# - There are many unusual symbols, such as in "MenÛªs", and hashtags (#)
+# - We need to remove urls
+# - Many tweets have date tags, such as "8/6/2015@2:09 PM:"
 
-# + tags=[]
-for i in range(1,11):
-    df=tweet[tweet['keyword']=='sinking'].iloc[i]
-    print(str(df['target']) + ": " + df['text'])
+# ## Keywords
+# The keyword column contain an important keyword present in the tweet, such as "sinking".
 
-# + tags=[]
-print(tweet.shape)
-print(test.shape)
+tweet[tweet['keyword']=='sinking'][["text", "target"]].head(10)
+
+# It looks like I found a contradiction in the dataset:
+
+for i in [6091, 6094]:
+    print("\n-Target: ",tweet.iloc[i].target)
+    print("-Tweet: \n", tweet.iloc[i].text)
+
+# TODO: 
+# - Inspect if there are many of these
+#   - Find number of duplicate tweets
 
 # + tags=[]
 tweet.nunique()
@@ -252,6 +272,9 @@ def create_corpus(text: pd.core.series.Series):
     """
     Creates a corpus while filtering out stop words and non-alphanumeric words
     """
+    
+    from nltk.tokenize import word_tokenize  # Tokenize words
+    
     stop=set(stopwords.words('english'))
     corpus = []
     for tw in tqdm(text):   # For loop with progress bar
@@ -287,7 +310,6 @@ def load_obj(name ):
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 tokenizer_object = Tokenizer()
-tokenizer_object.fit_on_texts(create_corpus(test))
 
 # +
 # Tokenize the words in the corpus
@@ -308,6 +330,8 @@ save_obj(tweet_pad, "tweet_pad")
 # Load previously created tokenizer
 tokenizer_object = load_obj("tokenizer_object")
 tweet_pad = load_obj("tweet_pad")
+
+
 # ## Word embedding vectorization
 # We will first vectorize words using a library of vectors from a pre trained model.
 #
@@ -371,7 +395,12 @@ for word,i in tqdm(word_index.items(), total = len(word_index.items())):
     emb_vec=embedding_dict.get(word)
     if emb_vec is not None:
         embedding_matrix[i,:]=emb_vec
+
+save_obj(embedding_matrix, "embedding_matrix")
 # -
+
+save_obj(embedding_matrix, "embedding_matrix")
+embedding_matrix = load_obj("embedding_matrix")
 
 # ## We initialize the embedding layer for the model
 # The embedding layer is a flexible layer that can be used in a variety of ways:
@@ -484,26 +513,6 @@ axes = sns.lineplot(data=pd.DataFrame(history.history)[["val_accuracy", "val_los
 
 y_pre=model.predict(test)
 
-# ## Keywords
-# We now focus on tweets of selected keywords
-
-# ### Most used words in the fatalities keyword category
-
-# +
-selected_tweets = tweet[tweet.keyword == "fatalities"]
-
-# list of words in selected tweets
-list_of_words = [re.sub("", "", x).lower().split() for x in selected_tweets.text]
-
-# Flatten nested lists
-list_of_words = [item for sublist in list_of_words for item in sublist]
-# -
-
-pd.DataFrame({"words":list_of_words}).words.value_counts().head(20)
-
-
-WordCloud(height=600, width=600, max_words=200).generate(",".join(list_of_words)).to_image()
-
 # # TODO
 # - Remove non words
 # - encode urls?
@@ -513,6 +522,22 @@ WordCloud(height=600, width=600, max_words=200).generate(",".join(list_of_words)
 # - Spelling/grammar correction?
 #   - Companies like Google and Microsoft have achieved a decent accuracy level in automated spell correction. One can use algorithms like the Levenshtein Distances, Dictionary Lookup etc. or other modules and packages to fix these errors.
 #   - Number of misspelled words
+
+# - Try Neural Turing Machine (attention): https://github.com/carpedm20/NTM-tensorflow
+# - End-To-End Memory Networks: https://github.com/carpedm20/MemN2N-tensorflow
+# - Adaptive Computation Time algorithm https://github.com/DeNeutoy/act-tensorflow
+
+# ## Saving the notebook environment variables
+
+# +
+# Saving environment
+import dill
+# save
+dill.dump_session('notebook_env.db')
+
+# load
+dill.load_session('notebook_env.db')
+# -
 
 # ## Split joined words
 
@@ -589,16 +614,22 @@ def expand_contractions(text,contractions_dict=contractions_dict):
 df['reviews.text']=df['reviews.text'].apply(lambda x:expand_contractions(x))
 # -
 
-# # TODO
-# - Try Neural Turing Machine (attention): https://github.com/carpedm20/NTM-tensorflow
-# - End-To-End Memory Networks: https://github.com/carpedm20/MemN2N-tensorflow
-# - Adaptive Computation Time algorithm https://github.com/DeNeutoy/act-tensorflow
+# ## Keywords
+# We now focus on tweets of selected keywords
+
+# ### Most used words in the fatalities keyword category
 
 # +
-# Saving environment
-import dill
-# save
-dill.dump_session('notebook_env.db')
+selected_tweets = tweet[tweet.keyword == "fatalities"]
 
-# load
-dill.load_session('notebook_env.db')
+# list of words in selected tweets
+list_of_words = [re.sub("", "", x).lower().split() for x in selected_tweets.text]
+
+# Flatten nested lists
+list_of_words = [item for sublist in list_of_words for item in sublist]
+# -
+
+pd.DataFrame({"words":list_of_words}).words.value_counts().head(20)
+
+
+WordCloud(height=600, width=600, max_words=200).generate(",".join(list_of_words)).to_image()
