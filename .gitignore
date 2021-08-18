@@ -1,0 +1,5 @@
+obj/
+GloVe/
+input/
+tags/
+notebook_env.db

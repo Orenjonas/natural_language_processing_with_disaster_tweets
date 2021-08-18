@@ -1,0 +1,223 @@
+Ttype	obj/saved_model.pb	/^Ttype:$/;"	l
+Ttype	obj/saved_model.pb	/^Ttype:$/;"	l
+	obj/saved_model.pb	/^:/;"	l
+shape	obj/saved_model.pb	/^shape:/;"	l
+shape	obj/saved_model.pb	/^shape:$/;"	l
+valueB	obj/saved_model.pb	/^valueB/;"	l
+valueB	obj/saved_model.pb	/^valueB:$/;"	l
+inputs_0	obj/saved_model.pb	/^inputs_0:$/;"	l
+_output_shapes	obj/saved_model.pb	/^_output_shapes:$/;"	l
+ž„d:@::	d€:	@€:€	obj/saved_model.pb	/^ž„d:@::	d€:	@€:€:$/;"	l
+ž„d:@:::::::	d€:	@€:€::::	obj/saved_model.pb	/^ž„d:@::/;"	l
+	obj/saved_model.pb	/^:$/;"	l
+dense/BiasAdd/ReadVariableOpdense/BiasAdd/ReadVariableOp2	obj/saved_model.pb	/^dense\/BiasAdd\/ReadVariableOpdense\/BiasAdd\/ReadVariableOp2:$/;"	l
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+"savev2_count_1_read_readvariableop	obj/saved_model.pb	/^"savev2_count_1_read_readvariableop:$/;"	l
+/while_lstm_cell_split_1_readvariableop_resource:	€	obj/saved_model.pb	/^\/while_lstm_cell_split_1_readvariableop_resource:	€:$/;"	l
+5savev2_adam_lstm_lstm_cell_bias_m_read_readvariableop	obj/saved_model.pb	/^5savev2_adam_lstm_lstm_cell_bias_m_read_readvariableop:$/;"	l
+BUILDDIR	GloVe/Makefile	/^BUILDDIR := build$/;"	m
+CC	GloVe/Makefile	/^CC = gcc$/;"	m
+CFLAGS	GloVe/Makefile	/^CFLAGS = -lm -pthread -O3 -march=native -funroll-loops -Wall -Wextra -Wpedantic$/;"	m
+COMMON_H	GloVe/src/common.h	2;"	d
+CREC	GloVe/src/common.h	/^} CREC;$/;"	t	typeref:struct:cooccur_rec
+CRECID	GloVe/src/cooccur.c	/^} CRECID;$/;"	t	typeref:struct:cooccur_rec_id	file:
+CompareVocab	GloVe/src/vocab_count.c	/^int CompareVocab(const void *a, const void *b) {$/;"	f
+CompareVocabTie	GloVe/src/vocab_count.c	/^int CompareVocabTie(const void *a, const void *b) {$/;"	f
+HASHFN	GloVe/src/common.h	36;"	d
+HASHREC	GloVe/src/common.h	/^} HASHREC;$/;"	t	typeref:struct:hashrec
+HAVE_STRUCT_TIMESPEC	GloVe/src/glove.c	35;"	d	file:
+HEADERS	GloVe/Makefile	/^HEADERS := $(SRCDIR)\/common.h$/;"	m
+LRAND_MAX	GloVe/src/shuffle.c	/^static const long LRAND_MAX = ((long) RAND_MAX + 2) * (long)RAND_MAX;$/;"	v	file:
+MAX_LEN	commonlit_readibility_prize.py	/^MAX_LEN = 50$/;"	v
+MAX_STRING_LENGTH	GloVe/src/common.h	33;"	d
+MODULES	GloVe/Makefile	/^MODULES := $(BUILDDIR)\/vocab_count $(BUILDDIR)\/cooccur $(BUILDDIR)\/shuffle $(BUILDDIR)\/glove$/;"	m
+N	GloVe/eval/python/distance.py	/^    N = 100 # number of closest words that will be shown$/;"	v
+N	GloVe/eval/python/word_analogy.py	/^    N = 100;          # number of closest words that will be shown$/;"	v
+OBJ	GloVe/Makefile	/^OBJ := $(OBJDIR)\/vocab_count.o $(OBJDIR)\/cooccur.o $(OBJDIR)\/shuffle.o $(OBJDIR)\/glove.o$/;"	m
+OBJDIR	GloVe/Makefile	/^OBJDIR := $(BUILDDIR)$/;"	m
+SEED	GloVe/src/common.h	35;"	d
+SRCDIR	GloVe/Makefile	/^SRCDIR := src$/;"	m
+STRERROR	GloVe/src/common.c	34;"	d	file:
+STRERROR	GloVe/src/common.c	36;"	d	file:
+TSIZE	GloVe/src/common.h	34;"	d
+VOCAB	GloVe/src/vocab_count.c	/^} VOCAB;$/;"	t	typeref:struct:vocabulary	file:
+W	GloVe/src/glove.c	/^real *W, *gradsq, *cost;$/;"	v
+WordLookup	GloVe/eval/matlab/WordLookup.m	/^function index = WordLookup(InputString)$/;"	f
+WordLookup_octave	GloVe/eval/octave/WordLookup_octave.m	/^function index = WordLookup_octave(InputString)$/;"	f
+_CRT_SECURE_NO_WARNINGS	GloVe/src/glove.c	25;"	d	file:
+_FILE_OFFSET_BITS	GloVe/src/glove.c	40;"	d	file:
+_input_shapes	obj/saved_model.pb	/^$/;"	l
+alpha	GloVe/src/glove.c	/^real alpha = 0.75, x_max = 100.0; \/\/ Weighting function parameters, not extremely sensitive to corpus, though may need adjustment for very small or very large corpora$/;"	v
+array_size	GloVe/src/shuffle.c	/^long long array_size = 2000000; \/\/ size of chunks to shuffle individually$/;"	v
+axes	commonlit_readibility_prize.py	/^axes = sns.lineplot(data=pd.DataFrame(history.history)[["accuracy", "loss"]])$/;"	v
+axes	commonlit_readibility_prize.py	/^axes = sns.lineplot(data=pd.DataFrame(history.history)[["val_accuracy", "val_loss"]])$/;"	v
+batch_size	commonlit_readibility_prize.py	/^                    batch_size=4,$/;"	v
+bitwisehash	GloVe/src/common.c	/^unsigned int bitwisehash(char *word, int tsize, unsigned int seed) {$/;"	f
+check_exit	GloVe/randomization.test.sh	/^check_exit() {$/;"	f
+check_nan	GloVe/src/glove.c	/^inline real check_nan(real update) {$/;"	f
+checkpoint_every	GloVe/src/glove.c	/^int checkpoint_every = 0; \/\/ checkpoint the model for every checkpoint_every iterations. Do nothing if checkpoint_every <= 0$/;"	v
+clean_data	commonlit_readibility_prize.py	/^def clean_data(df: pd.DataFrame):$/;"	f
+compare_crec	GloVe/src/cooccur.c	/^int compare_crec(const void *a, const void *b) {$/;"	f
+compare_crecid	GloVe/src/cooccur.c	/^int compare_crecid(CRECID a, CRECID b) {$/;"	f
+contractions_dict	commonlit_readibility_prize.py	/^contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",$/;"	v
+contractions_re	commonlit_readibility_prize.py	/^contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))$/;"	v
+cooccur_rec	GloVe/src/common.h	/^typedef struct cooccur_rec {$/;"	s
+cooccur_rec_id	GloVe/src/cooccur.c	/^typedef struct cooccur_rec_id {$/;"	s	file:
+corpus	commonlit_readibility_prize.py	/^corpus = create_corpus(tweet.text.append(test.text))$/;"	v
+correct_spellings	commonlit_readibility_prize.py	/^def correct_spellings(text):$/;"	f
+cost	GloVe/src/glove.c	/^real *W, *gradsq, *cost;$/;"	v
+count	GloVe/src/vocab_count.c	/^    long long count;$/;"	m	struct:vocabulary	file:
+create_corpus	commonlit_readibility_prize.py	/^def create_corpus(text: pd.core.series.Series):$/;"	f
+delete	GloVe/src/cooccur.c	/^void delete(CRECID *pq, int size) {$/;"	f
+distance	GloVe/eval/python/distance.py	/^def distance(W, vocab, ivocab, input_term):$/;"	f
+distance	GloVe/eval/python/word_analogy.py	/^def distance(W, vocab, ivocab, input_term):$/;"	f
+distance_weighting	GloVe/src/cooccur.c	/^int distance_weighting = 1; \/\/ Flag to control the distance weighting of cooccurrence counts$/;"	v
+dropout	commonlit_readibility_prize.py	/^               dropout=0.2,  # Fraction of the units to drop for the linear transformation of the inputs.$/;"	v
+dta	commonlit_readibility_prize.py	/^dta = {k:v for (k,v) in zip(["Disaster", "Non-disaster"], [tw_len[tweet.target==i] for i in [0,1]])}$/;"	v
+emb_vec	commonlit_readibility_prize.py	/^    emb_vec=embedding_dict.get(word)$/;"	v
+embedding	commonlit_readibility_prize.py	/^embedding = Embedding(input_dim  = num_words,$/;"	v
+embedding_dict	commonlit_readibility_prize.py	/^embedding_dict = load_obj("embedding_dict")$/;"	v
+embedding_matrix	commonlit_readibility_prize.py	/^embedding_matrix = np.zeros((num_words, 100))$/;"	v
+embeddings_initializer	commonlit_readibility_prize.py	/^                      embeddings_initializer = Constant(embedding_matrix),$/;"	v
+epochs	commonlit_readibility_prize.py	/^                    epochs=15,$/;"	v
+eta	GloVe/src/glove.c	/^real eta = 0.05; \/\/ Initial learning rate$/;"	v
+evaluate_vectors	GloVe/eval/matlab/evaluate_vectors.m	/^function [BB] = evaluate_vectors(W)$/;"	f
+evaluate_vectors	GloVe/eval/python/evaluate.py	/^def evaluate_vectors(W, vocab):$/;"	f
+evaluate_vectors_octave	GloVe/eval/octave/evaluate_vectors_octave.m	/^function [BB] = evaluate_vectors_octave(W)$/;"	f
+expand_contractions	commonlit_readibility_prize.py	/^def expand_contractions(text,contractions_dict=contractions_dict):$/;"	f
+file_head	GloVe/src/cooccur.c	/^char *vocab_file, *file_head;$/;"	v
+file_head	GloVe/src/shuffle.c	/^char *file_head; \/\/ temporary file string$/;"	v
+find_arg	GloVe/src/common.c	/^int find_arg(char *str, int argc, char **argv) {$/;"	f
+free_fid	GloVe/src/common.c	/^void free_fid(FILE **fid, const int num) {$/;"	f
+free_resources	GloVe/src/cooccur.c	/^void free_resources(HASHREC** vocab_hash, CREC *cr, long long *lookup, $/;"	f
+free_table	GloVe/src/common.c	/^void free_table(HASHREC **ht) {$/;"	f
+generate	GloVe/eval/python/distance.py	/^def generate():$/;"	f
+generate	GloVe/eval/python/word_analogy.py	/^def generate():$/;"	f
+get_cooccurrence	GloVe/src/cooccur.c	/^int get_cooccurrence() {$/;"	f
+get_counts	GloVe/src/vocab_count.c	/^int get_counts() {$/;"	f
+get_num_lines	commonlit_readibility_prize.py	/^def get_num_lines(file_path: str):$/;"	f
+get_top_tweet_bigrams	commonlit_readibility_prize.py	/^def get_top_tweet_bigrams(corpus, n=None):$/;"	f
+get_word	GloVe/src/common.c	/^int get_word(char *word, FILE *fin) {$/;"	f
+glove_thread	GloVe/src/glove.c	/^void *glove_thread(void *vid) {$/;"	f
+grad_clip_value	GloVe/src/glove.c	/^real grad_clip_value = 100.0; \/\/ Clipping parameter for gradient components. Values will be clipped to [-grad_clip_value, grad_clip_value] interval.$/;"	v
+gradsq	GloVe/src/glove.c	/^real *W, *gradsq, *cost;$/;"	v
+hashinsert	GloVe/src/cooccur.c	/^void hashinsert(HASHREC **ht, char *w, long long id) {$/;"	f
+hashinsert	GloVe/src/vocab_count.c	/^void hashinsert(HASHREC **ht, char *w) {$/;"	f
+hashrec	GloVe/src/common.h	/^typedef struct hashrec {$/;"	s
+hashsearch	GloVe/src/cooccur.c	/^HASHREC *hashsearch(HASHREC **ht, char *w) {$/;"	f
+history	commonlit_readibility_prize.py	/^history = model.fit(x_train, y_train,$/;"	v
+id	GloVe/src/cooccur.c	/^    int id;$/;"	m	struct:cooccur_rec_id	file:
+init_gradsq_file	GloVe/src/glove.c	/^char init_gradsq_file[MAX_STRING_LENGTH];$/;"	v
+init_param_file	GloVe/src/glove.c	/^char init_param_file[MAX_STRING_LENGTH];$/;"	v
+inithashtable	GloVe/src/common.c	/^HASHREC ** inithashtable() {$/;"	f
+initialize_parameters	GloVe/src/glove.c	/^void initialize_parameters() {$/;"	f
+input_file	GloVe/src/glove.c	/^char input_file[MAX_STRING_LENGTH];$/;"	v
+input_length	commonlit_readibility_prize.py	/^                      input_length = MAX_LEN,$/;"	v
+input_term	GloVe/eval/python/distance.py	/^        input_term = input("\\nEnter word or sentence (EXIT to break): ")$/;"	v
+input_term	GloVe/eval/python/word_analogy.py	/^        input_term = raw_input("\\nEnter three words (EXIT to break): ")$/;"	v
+insert	GloVe/src/cooccur.c	/^void insert(CRECID *pq, CRECID new, int size) {$/;"	f
+lines_per_thread	GloVe/src/glove.c	/^long long num_lines, *lines_per_thread, vocab_size;$/;"	v
+list_of_words	commonlit_readibility_prize.py	/^list_of_words = [item for sublist in list_of_words for item in sublist]$/;"	v
+list_of_words	commonlit_readibility_prize.py	/^list_of_words = [re.sub("", "", x).lower().split() for x in selected_tweets.text]$/;"	v
+load_init_file	GloVe/src/glove.c	/^int load_init_file(char *file_name, real *array, long long array_size) {$/;"	f
+load_init_gradsq	GloVe/src/glove.c	/^int load_init_gradsq = 0; \/\/ if 1 initial squared gradients are loaded from -init-gradsq-file$/;"	v
+load_init_param	GloVe/src/glove.c	/^int load_init_param = 0; \/\/ if 1 initial paramters are loaded from -init-param-file$/;"	v
+load_obj	commonlit_readibility_prize.py	/^def load_obj(name ):$/;"	f
+log_file_loading_error	GloVe/src/common.c	/^int log_file_loading_error(char *file_description, char *file_name) {$/;"	f
+main	GloVe/eval/python/evaluate.py	/^def main():$/;"	f
+main	GloVe/src/cooccur.c	/^int main(int argc, char **argv) {$/;"	f
+main	GloVe/src/glove.c	/^int main(int argc, char **argv) {$/;"	f
+main	GloVe/src/shuffle.c	/^int main(int argc, char **argv) {$/;"	f
+main	GloVe/src/vocab_count.c	/^int main(int argc, char **argv) {$/;"	f
+mask_zero	commonlit_readibility_prize.py	/^                      mask_zero = True,  # Boolean, whether or not the input value 0 is a special "padding" value that should be masked out.$/;"	v
+max_product	GloVe/src/cooccur.c	/^long long max_product; \/\/ Cutoff for product of word frequency ranks below which cooccurrence counts will be stored in a compressed full array$/;"	v
+max_vocab	GloVe/src/vocab_count.c	/^long long max_vocab = 0; \/\/ max_vocab = 0 for no limit$/;"	v
+memory_limit	GloVe/src/cooccur.c	/^real memory_limit = 3; \/\/ soft limit, in gigabytes, used to estimate optimal array sizes$/;"	v
+memory_limit	GloVe/src/shuffle.c	/^real memory_limit = 2.0; \/\/ soft limit, in gigabytes$/;"	v
+merge_files	GloVe/src/cooccur.c	/^int merge_files(int num) {$/;"	f
+merge_write	GloVe/src/cooccur.c	/^int merge_write(CRECID new, CRECID *old, FILE *fout) {$/;"	f
+min_count	GloVe/src/vocab_count.c	/^long long min_count = 1; \/\/ min occurrences for inclusion in vocab$/;"	v
+misspelled	commonlit_readibility_prize.py	/^misspelled = spell.unknown(['something', 'is', 'hapenning', 'here'])$/;"	v
+model	GloVe/src/glove.c	/^int model = 2; \/\/ For text file output only. 0: concatenate word and context vectors (and biases) i.e. save everything; 1: Just save word vectors (no bias); 2: Save (word + context word) vectors (no biases)$/;"	v
+model	commonlit_readibility_prize.py	/^model = Sequential()$/;"	v
+model	commonlit_readibility_prize.py	/^model = keras.models.load_model('.\/obj\/')$/;"	v
+next	GloVe/src/common.h	/^    struct hashrec *next;$/;"	m	struct:hashrec	typeref:struct:hashrec::hashrec
+num	GloVe/src/common.h	/^    long long num; \/\/count or id$/;"	m	struct:hashrec
+num_iter	GloVe/src/glove.c	/^int num_iter = 25; \/\/ Number of full passes through cooccurrence matrix$/;"	v
+num_lines	GloVe/src/glove.c	/^long long num_lines, *lines_per_thread, vocab_size;$/;"	v
+num_threads	GloVe/src/glove.c	/^int num_threads = 8; \/\/ pthreads$/;"	v
+num_words	commonlit_readibility_prize.py	/^num_words = len(word_index) + 1$/;"	v
+output_dim	commonlit_readibility_prize.py	/^                      output_dim = 100,$/;"	v
+output_shapes	obj/saved_model.pb	/^$/;"	l
+overflow_length	GloVe/src/cooccur.c	/^long long overflow_length; \/\/ Number of cooccurrence records whose product exceeds max_product to store in memory before writing to disk$/;"	v
+rand_long	GloVe/src/shuffle.c	/^static long rand_long(long n) {$/;"	f	file:
+real	GloVe/src/common.h	/^typedef double real;$/;"	t
+recurrent_dropout	commonlit_readibility_prize.py	/^               recurrent_dropout=0.2  # Fraction of the units to drop for the linear transformation of the recurrent state.$/;"	v
+replace	commonlit_readibility_prize.py	/^  def replace(match):$/;"	f	function:expand_contractions
+save_W_file	GloVe/src/glove.c	/^char save_W_file[MAX_STRING_LENGTH];$/;"	v
+save_gradsq	GloVe/src/glove.c	/^int save_gradsq = 0; \/\/ By default don't save squared gradient values$/;"	v
+save_gradsq_file	GloVe/src/glove.c	/^char save_gradsq_file[MAX_STRING_LENGTH];$/;"	v
+save_init_param	GloVe/src/glove.c	/^int save_init_param = 0; \/\/ if 1 initial paramters are saved (i.e., in the 0 checkpoint)$/;"	v
+save_obj	commonlit_readibility_prize.py	/^def save_obj(obj, name ):$/;"	f
+save_params	GloVe/src/glove.c	/^int save_params(int nb_iter) {$/;"	f
+scmp	GloVe/src/common.c	/^int scmp( char *s1, char *s2 ) {$/;"	f
+seed	GloVe/src/glove.c	/^int seed = 0;$/;"	v
+seed	GloVe/src/shuffle.c	/^int seed = 0;$/;"	v
+sequences	commonlit_readibility_prize.py	/^sequences = tokenizer_object.texts_to_sequences(corpus)$/;"	v
+shuffle	GloVe/src/shuffle.c	/^void shuffle(CREC *array, long n) {$/;"	f
+shuffle_by_chunks	GloVe/src/shuffle.c	/^int shuffle_by_chunks() {$/;"	f
+shuffle_merge	GloVe/src/shuffle.c	/^int shuffle_merge(int num) {$/;"	f
+sia	commonlit_readibility_prize.py	/^sia = SentimentIntensityAnalyzer()$/;"	v
+sia_table	commonlit_readibility_prize.py	/^sia_table = []$/;"	v
+spell	commonlit_readibility_prize.py	/^spell = SpellChecker()$/;"	v
+swap_entry	GloVe/src/cooccur.c	/^void swap_entry(CRECID *pq, int i, int j) {$/;"	f
+symmetric	GloVe/src/cooccur.c	/^int symmetric = 1; \/\/ 0: asymmetric, 1: symmetric$/;"	v
+test	commonlit_readibility_prize.py	/^test = clean_data(test)$/;"	v
+test	commonlit_readibility_prize.py	/^test=pd.read_csv('.\/input\/nlp-getting-started\/test.csv')$/;"	v
+test_data	commonlit_readibility_prize.py	/^test_data = tweet_pad[7613:, :]$/;"	v
+test_size	commonlit_readibility_prize.py	/^                                                    test_size=0.15)$/;"	v
+tokenizer_object	commonlit_readibility_prize.py	/^tokenizer_object = Tokenizer()$/;"	v
+tokenizer_object	commonlit_readibility_prize.py	/^tokenizer_object = load_obj("tokenizer_object")$/;"	v
+train_data	commonlit_readibility_prize.py	/^train_data = tweet_pad[:7613, :]$/;"	v
+train_glove	GloVe/src/glove.c	/^int train_glove() {$/;"	f
+tw_len	commonlit_readibility_prize.py	/^tw_len = tweet.text.str.len()$/;"	v
+tweet	commonlit_readibility_prize.py	/^tweet = clean_data(tweet)$/;"	v
+tweet	commonlit_readibility_prize.py	/^tweet= pd.read_csv('.\/input\/nlp-getting-started\/train.csv')$/;"	v
+tweet_pad	commonlit_readibility_prize.py	/^tweet_pad = load_obj("tweet_pad")$/;"	v
+tweet_pad	commonlit_readibility_prize.py	/^tweet_pad = pad_sequences(sequences, maxlen=MAX_LEN, truncating='pre', padding='pre')$/;"	v
+use_binary	GloVe/src/glove.c	/^int use_binary = 0; \/\/ 0: save as text files; 1: save as binary; 2: both. For binary, save both word and context word vectors.$/;"	v
+use_unk_vec	GloVe/src/glove.c	/^int use_unk_vec = 1; \/\/ 0 or 1$/;"	v
+val	GloVe/src/common.h	/^    real val;$/;"	m	struct:cooccur_rec
+val	GloVe/src/cooccur.c	/^    real val;$/;"	m	struct:cooccur_rec_id	file:
+validation_data	commonlit_readibility_prize.py	/^                    validation_data=(x_val, y_val),$/;"	v
+value_dist	commonlit_readibility_prize.py	/^value_dist = tweet.target.value_counts()$/;"	v
+vector_size	GloVe/src/glove.c	/^int vector_size = 50; \/\/ Word vector size$/;"	v
+verbose	GloVe/src/cooccur.c	/^int verbose = 2; \/\/ 0, 1, or 2$/;"	v
+verbose	GloVe/src/glove.c	/^int verbose = 2; \/\/ 0, 1, or 2$/;"	v
+verbose	GloVe/src/shuffle.c	/^int verbose = 2; \/\/ 0, 1, or 2$/;"	v
+verbose	GloVe/src/vocab_count.c	/^int verbose = 2; \/\/ 0, 1, or 2$/;"	v
+verbose	commonlit_readibility_prize.py	/^                    verbose=2)$/;"	v
+vocab_file	GloVe/src/cooccur.c	/^char *vocab_file, *file_head;$/;"	v
+vocab_file	GloVe/src/glove.c	/^char vocab_file[MAX_STRING_LENGTH];$/;"	v
+vocab_size	GloVe/src/glove.c	/^long long num_lines, *lines_per_thread, vocab_size;$/;"	v
+vocabulary	GloVe/src/vocab_count.c	/^typedef struct vocabulary {$/;"	s	file:
+window_size	GloVe/src/cooccur.c	/^int window_size = 15; \/\/ default context window size$/;"	v
+word	GloVe/src/common.h	/^    char *word;$/;"	m	struct:hashrec
+word	GloVe/src/vocab_count.c	/^    char *word;$/;"	m	struct:vocabulary	file:
+word1	GloVe/src/common.h	/^    int word1;$/;"	m	struct:cooccur_rec
+word1	GloVe/src/cooccur.c	/^    int word1;$/;"	m	struct:cooccur_rec_id	file:
+word2	GloVe/src/common.h	/^    int word2;$/;"	m	struct:cooccur_rec
+word2	GloVe/src/cooccur.c	/^    int word2;$/;"	m	struct:cooccur_rec_id	file:
+word_index	commonlit_readibility_prize.py	/^word_index = tokenizer_object.word_index$/;"	v
+wordcloud	commonlit_readibility_prize.py	/^wordcloud = WordCloud().generate(",".join(tweet.head(10).text))$/;"	v
+write_chunk	GloVe/src/cooccur.c	/^int write_chunk(CREC *cr, long long length, FILE *fout) {$/;"	f
+write_chunk	GloVe/src/shuffle.c	/^int write_chunk(CREC *array, long size, FILE *fout) {$/;"	f
+write_header	GloVe/src/glove.c	/^int write_header=0; \/\/0=no, 1=yes; writes vocab_size\/vector_size as first line for use with some libraries, such as gensim.$/;"	v
+x_max	GloVe/src/glove.c	/^real alpha = 0.75, x_max = 100.0; \/\/ Weighting function parameters, not extremely sensitive to corpus, though may need adjustment for very small or very large corpora$/;"	v
+y_pre	commonlit_readibility_prize.py	/^y_pre=model.predict(test)$/;"	v
+Á:	obj/saved_model.pb	/^Á:/;"	l
