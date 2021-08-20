@@ -15,50 +15,60 @@
 # ---
 
 # + tags=[]
+# More readable tracebacks from the wonderful `rich` package
+from rich.traceback import install
+install(show_locals=True)
+
+# Math
 import numpy as np
 import pandas as pd
 
+# Plotting
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.style.use('ggplot')
+from wordcloud import WordCloud  # Generate word clouds
 
-from sklearn.feature_extraction.text import CountVectorizer    # 
-from wordcloud import WordCloud                                # Generate word clouds
-
-from tqdm import tqdm  # Progress bar
-
-# Stopwords (common words)
-# nltk.download('stopwords')  # Stopwords must be downloaded
+# Data processing
 from nltk.corpus import stopwords
+
+# Other
+from tqdm import tqdm  # Progress bar
+from IPython.display import display, Markdown  # For printing markdown formatted output
 # -
 
-# # Inspect data
-
-# We read in and inspect the data
-
-# The training data rows contain a `keyword`, a `location` (sometimes not present), `text` containg a tweet and a `target` coding 1 for disaster and 0 for non-disaster.
-#
-# The training data contains 7613 observations, while the test data contains 3263 observations.
+# # Read data 
 
 # + tags=[]
 tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
 test=pd.read_csv('./input/nlp-getting-started/test.csv')
 # -
 
-tweet.iloc[200]
+# # Inspect data
 
-tweet.iloc[200:203]
-
-# Location does not seem trustworthy.
+# ### Size of the data
 
 print(tweet.shape)
 print(test.shape)
 
+# The training data rows contain a `keyword`, a `location` (sometimes not present), `text` containg a tweet and a `target` coding 1 for disaster and 0 for non-disaster.
+#
+# The training data contains 7613 observations, while the test data contains 3263 observations.
+
+tweet.iloc[200:203]
+
+# At first glance location does not seem trustworthy.
+
 # By inspecting a few tweets we see that we need to clean the text before we can analyze it.
+
+f"{2}"
 
 # + tags=[]
 for i in [677, 2643, 3134, 92, 2290, 2062, 3681, 2343, 2384, 323]:
-    print(str(tweet.iloc[i]["target"]) + ": " + tweet.iloc[i]["text"])
+    # Print using markdown for better formatting
+    tg = tweet.iloc[i]["target"]
+    tw = tweet.iloc[i]["text"]
+    display(Markdown(f"Target: {tg} -- {tw}"))
 # -
 
 # We see that
@@ -135,6 +145,8 @@ plt.show()
 # - From https://www.kaggle.com/shahules/basic-eda-cleaning-and-glove#Exploratory-Data-Analysis-of-tweets
 
 def get_top_tweet_bigrams(corpus, n=None):
+    from sklearn.feature_extraction.text import CountVectorizer
+    
     vec = CountVectorizer(ngram_range=(2, 2)).fit(corpus)
     bag_of_words = vec.transform(corpus)
     sum_words = bag_of_words.sum(axis=0) 
@@ -142,17 +154,6 @@ def get_top_tweet_bigrams(corpus, n=None):
     words_freq =sorted(words_freq, key = lambda x: x[1], reverse=True)
     return words_freq[:n]
 
-
-# # Visualize common words within groups
-
-# - TODO: Remove
-
-# + tags=[]
-# Temp, test WordCloud
-wordcloud = WordCloud().generate(",".join(tweet.head(10).text))
-plt.imshow(wordcloud, interpolation='bilinear')
-plt.axis("off")
-# -
 
 # # Clean tweets
 # - TODO Colons are not removed
@@ -187,7 +188,7 @@ def clean_data(df: pd.DataFrame):
 
     # Clean training data
     df.text = df.text.str.lower()
-    df.text = df.text.str.replace(r"https[^\s|$]*", "URL", regex=True)  # Change all urls to "URL"
+    df.text = df.text.str.replace(r"https[^\s|$]*", "", regex=True)  # Change all urls to "URL"
     df.text = df.text.str.replace(punctuation_regex, "", regex=True)
     df.text = df.text.str.replace(emoji_pattern, "", regex=True)  # Remove emojis and symbols
     df.text = df.text.str.replace(r"\n", " ", regex = True)       # Change \n to space
@@ -199,6 +200,15 @@ def clean_data(df: pd.DataFrame):
 
 tweet = clean_data(tweet)
 test = clean_data(test)
+
+# # Visualize common words in disaster tweets with wordcloud
+# - TODO: Remove, not very informative
+
+# + tags=[]
+wordcloud = WordCloud().generate(",".join(tweet[tweet.target==1].text))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis("off")
+# -
 
 tweet.text.iloc[3639]
 
@@ -259,10 +269,26 @@ def correct_spellings(text):
 
 # -
 
-# - TODO implement in data clean block with apply
+# - TODO implement into the data cleaning
 
 # # Preparing the data
 # We need to convert the text to sequences as input to the model
+
+# ## Saving objects
+# We create some reuseable code for saving objects for later use, so we don't have to re-run time consuming code.
+
+# +
+import pickle
+def save_obj(obj, name ):
+    with open('obj/'+ name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(name ):
+    with open('obj/' + name + '.pkl', 'rb') as f:
+        return pickle.load(f)
+
+
+# -
 
 # ## Corpus
 # We first create a corpus, removing stop words
@@ -287,22 +313,9 @@ def create_corpus(text: pd.core.series.Series):
 
 # We create a corpus from the training and test dataset. We will later split the data back into training and test data using the correct index.
 corpus = create_corpus(tweet.text.append(test.text))
+save_obj(corpus, "corpus")
 
-# # Saving objects
-# We create some reuseable code for saving objects for later use, so we don't have to re-run time consuming code.
-
-# +
-import pickle
-def save_obj(obj, name ):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def load_obj(name ):
-    with open('obj/' + name + '.pkl', 'rb') as f:
-        return pickle.load(f)
-
-
-# -
+corpus = load_obj("corpus")
 
 # ### Tokenization
 # We tokenize the tweets using helper functions from `keras`
@@ -362,6 +375,7 @@ def get_num_lines(file_path: str):
 
 # +
 # # Run this once to save an embedding dictionary to a file in and obj/ folder in current dir (obj dir must be created beforehand)
+
 # embedding_dict={}
 # file_path = './input/glove.twitter.27B.100d.txt'
 # with open(file_path,'r') as f:
@@ -386,20 +400,20 @@ embedding_dict = load_obj("embedding_dict")
 
 # - TODO:For the index in the matrix to match the word tokens the embedding_matrix is padded with an initial row of zeros because tokenization starts at 1, while python list index starts at 0
 
-# +
 word_index = tokenizer_object.word_index
 num_words = len(word_index) + 1
-embedding_matrix = np.zeros((num_words, 100))
 
-for word,i in tqdm(word_index.items(), total = len(word_index.items())):
-    emb_vec=embedding_dict.get(word)
-    if emb_vec is not None:
-        embedding_matrix[i,:]=emb_vec
+# +
+# embedding_matrix = np.zeros((num_words, 100))
 
-save_obj(embedding_matrix, "embedding_matrix")
+# for word,i in tqdm(word_index.items(), total = len(word_index.items())):
+#     emb_vec=embedding_dict.get(word)
+#     if emb_vec is not None:
+#         embedding_matrix[i,:]=emb_vec
+
+# save_obj(embedding_matrix, "embedding_matrix")
 # -
 
-save_obj(embedding_matrix, "embedding_matrix")
 embedding_matrix = load_obj("embedding_matrix")
 
 # ## We initialize the embedding layer for the model
@@ -411,6 +425,7 @@ embedding_matrix = load_obj("embedding_matrix")
 
 # +
 from keras.layers import Embedding
+from keras.initializers import Constant
 
 embedding = Embedding(input_dim  = num_words,
                       output_dim = 100,
@@ -433,7 +448,6 @@ embedding = Embedding(input_dim  = num_words,
 
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, SpatialDropout1D
-from keras.initializers import Constant
 
 # ## Building the model
 # We then set up our model
@@ -499,10 +513,6 @@ axes = sns.lineplot(data=pd.DataFrame(history.history)[["val_accuracy", "val_los
 
 # Accuracy and loss seem to decrease on the validation set. This does not bode well.
 
-# +
-# predictions = model.predict(test_data)
-# -
-
 # ## TODO
 # - Inspect misclassified tweets
 # - Compare to pretrained CNN
@@ -511,7 +521,7 @@ axes = sns.lineplot(data=pd.DataFrame(history.history)[["val_accuracy", "val_los
 
 # ## Misclassified tweets
 
-y_pre=model.predict(test)
+predictions = model.predict(test_data)
 
 # # TODO
 # - Remove non words
