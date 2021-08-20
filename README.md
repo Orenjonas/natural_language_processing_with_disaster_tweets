@@ -3,9 +3,7 @@
 This repo contains a jupyter notebook for analyzing and predicting disaster tweets, for the introductory
 [Kaggle competition](https://www.kaggle.com/c/nlp-getting-started).
 
-The latest version of the notebook can be seen [here](https://htmlpreview.github.io/?https://github.com/Orenjonas/natural_language_processing_with_disaster_tweets/blob/main/nlp_with_disaster_tweets.html).
-
-> html hosting courtesy of [htmlpreview](https://github.com/htmlpreview/htmlpreview.github.com) by Jerzy Głowacki.
+The latest version of the notebook can be seen [here](https://htmlpreview.github.io/?https://github.com/Orenjonas/natural_language_processing_with_disaster_tweets/blob/main/nlp_with_disaster_tweets.html) 
 
 ## Purpose
 The purpose of this project is to learn the basics of implementing machine learning algorithms for natural
