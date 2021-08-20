@@ -1,5 +1,9 @@
 # Natural language processing with disaster tweets
 
+See last version of the [notebook here](https://htmlpreview.github.io/?https://github.com/Orenjonas/natural_language_processing_with_disaster_tweets/blob/main/nlp_with_disaster_tweets.html).
+
+> Courtesy of [htmlpreview](https://github.com/htmlpreview/htmlpreview.github.com) by Jerzy Głowacki.
+
 ## Purpose
 The purpose of this project is to learn the basics of implementing machine learning algorithms for natural
 language processing, and caching up on the state of the art solutions.
