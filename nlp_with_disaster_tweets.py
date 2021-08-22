@@ -61,8 +61,6 @@ tweet.iloc[200:203]
 
 # By inspecting a few tweets we see that we need to clean the text before we can analyze it.
 
-f"{2}"
-
 # + tags=[]
 for i in [677, 2643, 3134, 92, 2290, 2062, 3681, 2343, 2384, 323]:
     # Print using markdown for better formatting
@@ -155,19 +153,60 @@ def get_top_tweet_bigrams(corpus, n=None):
     return words_freq[:n]
 
 
+# # Word embedding vectorization
+# We will vectorize words using a library of vectors from a pre trained model.
+#
+# - TODO: Fine tune on current dataset
+#   - see demo.sh in the github repo
+# - Alternative dataset: https://allennlp.org/elmo
+#
+#
+# We will use GloVe for vectorization of words found at https://github.com/stanfordnlp/GloVe,
+# trying the twitter dataset first.
+
+# +
+# import mmap
+
+def get_num_lines(file_path: str):
+    """
+    Get the number of lines in a file. 
+    Used in the tqdm module to get a progress bar for 
+    for-loops when iterating over lines in a file.
+    """
+    fp = open(file_path, "r+")
+    buf = mmap.mmap(fp.fileno(), 0)
+    lines = 0
+    while buf.readline():
+        lines += 1
+    return lines
+
+
+# +
+# # Run this once to save an embedding dictionary to a file in and obj/ folder in current dir (`obj` dir must be created beforehand)
+
+# embedding_dict={}
+# file_path = './input/glove.twitter.27B.100d.txt'
+# with open(file_path,'r') as f:
+#     for line in tqdm(f, total = get_num_lines(file_path)):
+#         values=line.split()
+#         word=values[0]
+#         vectors=np.asarray(values[1:],'float32')
+#         embedding_dict[word]=vectors
+# f.close()
+
+# save_obj(embedding_dict, "embedding_dict")
+# -
+
+# Load saved embedding dictionary from previous cell
+embedding_dict = load_obj("embedding_dict")
+
+# - TODO: Visualize embeddings with PCA?
+
 # # Clean tweets
-# - TODO Colons are not removed
 
-# We replace ascii %20 with space in the keywords
-
-list(tweet.keyword.unique())[30]
-
-test.keyword =  test.keyword.str.replace("%20", " ")
-tweet.keyword = tweet.keyword.str.replace("%20", " ")
-
-list(tweet.keyword.unique())[30]
-
-# - TODO inplace editing
+# We will need to preprocess the data based on how words are embedded into the pre-trained embeddings.
+#
+# We will first attempt some boiler-plate text cleaning, courtesy of among others [this notebook](https://www.kaggle.com/shahules/basic-eda-cleaning-and-glove#GloVe-for-Vectorization), and inspect how well it coincides with the embedding.
 
 tweet.text.iloc[3639]
 
@@ -187,6 +226,7 @@ def clean_data(df: pd.DataFrame):
                                "]+", flags=re.UNICODE)
 
     # Clean training data
+    fg.keyword.str.replace("%20", " ")  # We replace ascii %20 with space in the keywords, e.g 'body%20bags' -> 'body bags'
     df.text = df.text.str.lower()
     df.text = df.text.str.replace(r"https[^\s|$]*", "", regex=True)  # Change all urls to "URL"
     df.text = df.text.str.replace(punctuation_regex, "", regex=True)
@@ -198,19 +238,220 @@ def clean_data(df: pd.DataFrame):
     return df
 
 
-tweet = clean_data(tweet)
-test = clean_data(test)
+cleaned_tweet = clean_data(tweet)
 
-# # Visualize common words in disaster tweets with wordcloud
-# - TODO: Remove, not very informative
+cleaned_tweet.text.iloc[3639]
 
-# + tags=[]
-wordcloud = WordCloud().generate(",".join(tweet[tweet.target==1].text))
-plt.imshow(wordcloud, interpolation='bilinear')
-plt.axis("off")
+
+# ### Check embedding coverage
+#
+# We check how many of the words in our training set tweets are covered by the embedding dictionary
+
+def word_representation(word_dict: dict , word_list: list):
+    """Return the words from uq_words not contained in word_dict 
+    and the number of words not covered."""
+    n_covered = 0
+    not_covered = []
+    for word in word_list:
+        if word in word_dict:
+            n_covered += 1
+        else:
+            not_covered.append(word)
+
+    return n_covered, not_covered
+
+
+def get_unused_words(word_dict: dict , word_list: list):
+    """Returns a list of words from word_dict not contained in word_list"""
+    unused_words = word_dict.copy()#.keys())
+
+    # Remove words in tweet data from the dict
+    for word in word_list:
+        try:
+            unused_words.pop(word)
+        except KeyError:
+            pass
+
+    #Convert dict to list
+    return list(unused_words.keys())
+
+
+uq_words = tweet.text.str.split(expand=True).stack().unique()
+n_covered, not_covered = word_representation(word_dict = embedding_dict, word_list = uq_words)
+unused_words = get_unused_words(word_dict = embedding_dict, word_list = uq_words)
+
+# - Emojis have an embedding and might encode and important meaning in the tweets
+# - There seems to be <user>, <hashtag>, <url> and <number> placeholders
+
+# Checking the coverage of the tweets, we see that only 56% of the words in our data are in the embedding dictionary.
+
+n_covered/len(uq_words)
+
+# While only 1% of the words in the embedding dictionary is used.
+
+n_covered/len(embedding_dict)
+
+# This calls for further inquiry. Checking the words not covered by the embeddings, we see that there are numbers, URL's and  words with repeated number of letters (elongated words) eg. 'goooooooaaaaaal' among other things.
+
+",  ".join(not_covered[0:20])
+
+# When inspecting some of the unused words in the embedding dictionary we see that many things, such as hashtags, repeated letters in words, allcaps words and smileys are encoded with special placeholders, such as <allcaps>
+
+idx = 0
+"  ".join(unused_words[0:100])
+
+# ## More fitting text pre-processing
+# In their [info page](https://nlp.stanford.edu/projects/glove/) the writers of the GloVe algorithm supply a ruby regex used for text pre-processing for the twitter model.
+#
+# In an [issue thread](https://github.com/stanfordnlp/GloVe/issues/107) discussing text pre-processing for tweets on their Github page user [skondrashov](https://github.co/skondrashov) supplies a useful python conversion of this ruby script, that also illustrates how words are adjusted to fit in a standard dictionary, and tagged for special characters or rewritings, such as being prefixed with a hashtag or elongated.
+
+# +
+# re.sub?
 # -
 
-tweet.text.iloc[3639]
+[(1,2), (3,4)]
+
+# +
+# list.index?
+# -
+
+[(1,2), (3,4)].reverse
+
+# WORK IN PROGRESS:
+# - Create a function for removing repeated letters in words
+# - As a starting point, we create a function that converts  'goooaaaallls' to 'goals <elong>'
+# - Needs to iterate over all matches of repeated letters, and remove a combination of letters that results in a recognized word (check with a dictionary of known words)
+# - A recursive solution seems reasonable
+
+# +
+# TODO: 
+
+import re
+
+
+word = "goooaaaallls"
+
+# Get list of matches: [(group1, group2, ...), ...] where match group 3 is the repeated letters
+m = re.findall(r"(\S*?)(\w)(\2{1,})(\S*?)", word)
+
+# Build list of matches
+matches = []
+while m:
+    matches.append = m.pop()[3] # Get the trailing letters from the current match
+    
+# Outer recursive function, call inner to get all matches, then try all combinations of removal
+def outer():
+    pass
+
+# Inner recursive function collecting all matches
+def inner(matches: list):
+    
+
+
+# Drop following implementation for a recursive solution
+# Iterate over matches
+for i, match in enumerate(m):
+    repeated_letters_1 = match[3]
+    if (cleaned = re.sub(repeated_letters_1, "", word) in ["goals", "blabla"]):
+        continue
+       
+    # Iterate over remaining matches
+    # TODO: Needs code for variable number of matches
+    for other_m in m.remove(match):
+        repeated_letters_2 = other_m[3]
+        if (cleaned = re.sub(repeated_letters_2, "", word) in ["goals", "blabla"]):
+        extra_words = m[3]
+
+# +
+import re
+
+X = [
+    u'goooooooaaaaaallll',
+		u'http://foo.com/blah_blah http://foo.com/blah_blah/ http://foo.com/blah_blah_(wikipedia) https://foo_bar.example.com/',
+		u':\\ :-/ =-( =`( )\'8 ]^;',
+		u':) :-] =`) (\'8 ;`)',
+		u':D :-D =`b d\'8 ;`P',
+		u':| 8|',
+		u'<3<3 <3 <3',
+		u'#swag #swa00-= #as ## #WOOP #Feeling_Blessed #helloWorld',
+		u'holy crap!! i won!!!!@@!!!',
+		u'holy *IUYT$)(crap!! @@#i@%#@ swag.lord **won!!!!@@!!! wahoo....!!!??!??? Im sick lol.',
+		u'this sentencE consisTS OF slAyYyyy slayyyyyy WEiRDd caPITalIZAtionn',
+	]
+
+def sub(pattern, output, string, whole_word=False):
+	token = output
+	if whole_word:
+		pattern = r'(\s|^)' + pattern + r'(\s|$)'
+
+	if isinstance(output, str):
+		token = ' ' + output + ' '
+	else:
+		token = lambda match: ' ' + output(match) + ' '
+
+	return re.sub(pattern, token, string)
+
+def hashtag(token):
+	token = token.group('tag')
+	if token != token.upper():
+		token = ' '.join(re.findall('[a-zA-Z][^A-Z]*', token))
+
+	return '<hashtag> ' + token + ' <endhashtag>'
+
+def punc_repeat(token):
+	return token.group(0)[0] + " <repeat>"
+
+def punc_separate(token):
+	return token.group()
+
+def number(token):
+	return token.group() + ' <number>';
+
+def word_end_repeat(token):
+	return token.group(1) + token.group(2) + ' <elong>'
+
+def word_repeat(token):
+    for token.group() + ' <elong>'
+
+eyes        = r"[8:=;]"
+nose        = r"['`\-\^]?"
+sad_front   = r"[(\[/\\]+"
+sad_back    = r"[)\]/\\]+"
+smile_front = r"[)\]]+"
+smile_back  = r"[(\[]+"
+lol_front   = r"[DbpP]+"
+lol_back    = r"[d]+"
+neutral     = r"[|]+"
+sadface     = eyes + nose + sad_front   + '|' + sad_back   + nose + eyes
+smile       = eyes + nose + smile_front + '|' + smile_back + nose + eyes
+lolface     = eyes + nose + lol_front   + '|' + lol_back   + nose + eyes
+neutralface = eyes + nose + neutral     + '|' + neutral    + nose + eyes
+punctuation = r"""[ '!"#$%&'()+,/:;=?@_`{|}~\*\-\.\^\\\[\]]+""" ## < and > omitted to avoid messing up tokens
+
+print("\n".join(X))
+print("\n ===== Conversion: =====")
+
+for tweet in X:
+	tweet = sub(r'[\s]+',                             '  ',            tweet) # ensure 2 spaces between everything
+	tweet = sub(r'(?:(?:https?|ftp)://|www\.)[^\s]+', '<url>',         tweet, True)
+	tweet = sub(r'@\w+',                              '<user>',        tweet, True)
+	tweet = sub(r'#(?P<tag>\w+)',                     hashtag,         tweet, True)
+	tweet = sub(sadface,                              '<sadface>',     tweet, True)
+	tweet = sub(smile,                                '<smile>',       tweet, True)
+	tweet = sub(lolface,                              '<lolface>',     tweet, True)
+	tweet = sub(neutralface,                          '<neutralface>', tweet, True)
+	tweet = sub(r'(?:<3+)+',                          '<heart>',       tweet, True)
+	tweet = tweet.lower()
+	tweet = sub(r'[-+]?[.\d]*[\d]+[:,.\d]*',          number,          tweet, True)
+	tweet = sub(punctuation,                          punc_separate,   tweet)
+	tweet = sub(r'([!?.])\1+',                        punc_repeat,     tweet)
+	tweet = sub(r'(\S*?)(\w)\2+\b',                   word_end_repeat, tweet)
+# 	tweet = sub(r'(\S*?)(\w*(\w)\2+\w*)\2+\b',                   word_repeat, tweet)
+
+	tweet = tweet.split()
+	print(' '.join(tweet))
+
+# -
 
 # ## Acronyms and joined words in tweets
 # Many tweets contain acronyms and joined words, such as #arianagrande. These will not have a pre-trained embedding.
@@ -344,56 +585,6 @@ save_obj(tweet_pad, "tweet_pad")
 tokenizer_object = load_obj("tokenizer_object")
 tweet_pad = load_obj("tweet_pad")
 
-
-# ## Word embedding vectorization
-# We will first vectorize words using a library of vectors from a pre trained model.
-#
-# - TODO: Fine tune on current dataset
-#   - see demo.sh in the github repo
-# - Alternative dataset: https://allennlp.org/elmo
-#
-#
-# We will use GloVe for vectorization of words found at https://github.com/stanfordnlp/GloVe,
-# trying the twitter dataset first.
-
-# +
-# import mmap
-
-def get_num_lines(file_path: str):
-    """
-    Get the number of lines in a file. 
-    Used in the tqdm module to get a progress bar for 
-    for-loops when iterating over lines in a file.
-    """
-    fp = open(file_path, "r+")
-    buf = mmap.mmap(fp.fileno(), 0)
-    lines = 0
-    while buf.readline():
-        lines += 1
-    return lines
-
-
-# +
-# # Run this once to save an embedding dictionary to a file in and obj/ folder in current dir (obj dir must be created beforehand)
-
-# embedding_dict={}
-# file_path = './input/glove.twitter.27B.100d.txt'
-# with open(file_path,'r') as f:
-#     for line in tqdm(f, total = get_num_lines(file_path)):
-#         values=line.split()
-#         word=values[0]
-#         vectors=np.asarray(values[1:],'float32')
-#         embedding_dict[word]=vectors
-# f.close()
-
-# save_obj(embedding_dict, "embedding_dict")
-# -
-
-# Load saved embedding dictionary from previous cell
-embedding_dict = load_obj("embedding_dict")
-
-# - TODO: Visualize embeddings with PCA
-
 # ### Create embedding matrix
 # We create the embedding matrix, where each row is a pre-trained word embedding vector from the GloVe dictionary, and where row index coincides with the word token.
 #
@@ -458,8 +649,8 @@ model = Sequential()
 model.add(embedding)
 model.add(SpatialDropout1D(0.2))  # Dropout to reduce overfitting.
 model.add(LSTM(64,
-               dropout=0.2,  # Fraction of the units to drop for the linear transformation of the inputs.
-               recurrent_dropout=0.2  # Fraction of the units to drop for the linear transformation of the recurrent state.
+               dropout=0.5,  # Fraction of the units to drop for the linear transformation of the inputs.
+               recurrent_dropout=0.5  # Fraction of the units to drop for the linear transformation of the recurrent state.
               ))
 model.add(Dense(1, activation='sigmoid'))
 
@@ -492,13 +683,16 @@ print("Shape of Validation ",x_val.shape)
 # # %%time
 
 history = model.fit(x_train, y_train,
-                    batch_size=4,
-                    epochs=15,
+                    batch_size=16,
+                    epochs=9,
                     validation_data=(x_val, y_val),
                     verbose=2)
 
 # Save the fitted model to a file
 model.save('./obj/')
+# -
+
+# The model seems to overfit the data.
 
 # +
 # Loading the fitted model from file:
