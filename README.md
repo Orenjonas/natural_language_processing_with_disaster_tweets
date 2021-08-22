@@ -12,6 +12,12 @@ language processing, and catching up on the state of the art in the field.
 I will create a local jupyter notebook to experiment with and implement different methods, for later
 submission to the kaggle website when the predictions are satisfactory, and the notebook is readable and concise.
 
+## TODO:
+- Model is overfitting
+    - Reduce the number of hidden units?
+    - What is the best dropout rate for LSTM
+    - How does embeddings affect model complexity?
+
 ## Things to try
 - Use a docker image
 - Use "location" and "keyword" in analysis?
