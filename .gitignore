@@ -4,3 +4,5 @@ input/
 tags/
 notebook_env.db
 tags
+temp.txt
+nlp_with_disaster_tweets.py
