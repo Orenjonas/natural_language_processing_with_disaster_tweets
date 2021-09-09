@@ -14,12 +14,24 @@
 #     name: python3
 # ---
 
-# + tags=[]
-# More readable tracebacks from the wonderful `rich` package
-from rich.traceback import install
-install(show_locals=True)
+# # Introduction
+# This notebook implements cleaning and data exploration of the twitter data for the 
+# [Kaggle competition](https://www.kaggle.com/c/nlp-getting-started) on predicting which tweets refer to actual disasters.
+#
+# It is an exploratory work in progress, containing some unfinished tasks and some thoughts.
+#
+# ## Layout
+# The notebook covers
+# - Basic inspection of the data
+# - Sentiment analysis using [nltk](https://www.nltk.org/).
+# - Implementing word vectorization using the GloVe embeddings pre-trained on twitter data.
+# - Text cleaning
+#   - A general text cleanin method for analysis
+#   - Text cleaning specific for the GloVe embeddings
 
-# Math
+# # Imports
+
+# + tags=[]
 import numpy as np
 import pandas as pd
 
@@ -27,7 +39,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 plt.style.use('ggplot')
-from wordcloud import WordCloud  # Generate word clouds
 
 # Data processing
 from nltk.corpus import stopwords
@@ -35,13 +46,29 @@ from nltk.corpus import stopwords
 # Other
 from tqdm import tqdm  # Progress bar
 from IPython.display import display, Markdown  # For printing markdown formatted output
+
+# + [markdown] tags=[]
+# # Saving objects
+# We create some reuseable code for saving objects for later use, so we don't have to re-run time consuming code.
+
+# +
+import pickle
+def save_obj(obj, name ):
+    with open('obj/'+ name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(name ):
+    with open('obj/' + name + '.pkl', 'rb') as f:
+        return pickle.load(f)
+
+
 # -
 
 # # Read data 
 
 # + tags=[]
-tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
-test=pd.read_csv('./input/nlp-getting-started/test.csv')
+tweet = pd.read_csv('./input/nlp-getting-started/train.csv')
+test  = pd.read_csv('./input/nlp-getting-started/test.csv')
 # -
 
 # # Inspect data
@@ -108,6 +135,8 @@ plt.show()
 
 # # Sentiment analysis
 # We will try adding a sentiment analysis score to our tweets. `SentimentIntensityAnalyzer` from `nltk` gives pieces of text a sentiment score between -1 and 1, where 1 is very positive and -1 is very negative
+
+# TODO: Add estimated sentiment to model input 
 
 # +
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -208,6 +237,8 @@ embedding_dict = load_obj("embedding_dict")
 #
 # We will first attempt some boiler-plate text cleaning, courtesy of among others [this notebook](https://www.kaggle.com/shahules/basic-eda-cleaning-and-glove#GloVe-for-Vectorization), and inspect how well it coincides with the embedding.
 
+# ## Inital cleaning attempt 
+
 tweet.text.iloc[3639]
 
 
@@ -226,7 +257,7 @@ def clean_data(df: pd.DataFrame):
                                "]+", flags=re.UNICODE)
 
     # Clean training data
-    fg.keyword.str.replace("%20", " ")  # We replace ascii %20 with space in the keywords, e.g 'body%20bags' -> 'body bags'
+    df.keyword.str.replace("%20", " ")  # We replace ascii %20 with space in the keywords, e.g 'body%20bags' -> 'body bags'
     df.text = df.text.str.lower()
     df.text = df.text.str.replace(r"https[^\s|$]*", "", regex=True)  # Change all urls to "URL"
     df.text = df.text.str.replace(punctuation_regex, "", regex=True)
@@ -297,31 +328,98 @@ n_covered/len(embedding_dict)
 
 # When inspecting some of the unused words in the embedding dictionary we see that many things, such as hashtags, repeated letters in words, allcaps words and smileys are encoded with special placeholders, such as <allcaps>
 
-idx = 0
 "  ".join(unused_words[0:100])
 
-# ## More fitting text pre-processing
+# ## Cleaning and pre-processing for the GloVe embedding
 # In their [info page](https://nlp.stanford.edu/projects/glove/) the writers of the GloVe algorithm supply a ruby regex used for text pre-processing for the twitter model.
 #
 # In an [issue thread](https://github.com/stanfordnlp/GloVe/issues/107) discussing text pre-processing for tweets on their Github page user [skondrashov](https://github.co/skondrashov) supplies a useful python conversion of this ruby script, that also illustrates how words are adjusted to fit in a standard dictionary, and tagged for special characters or rewritings, such as being prefixed with a hashtag or elongated.
 
-# +
-# re.sub?
-# -
-
-[(1,2), (3,4)]
+# ## Remove contractions
+# Copied from https://www.analyticsvidhya.com/blog/2020/04/beginners-guide-exploratory-data-analysis-text-data/, with a small tweak for not matching `'s` in words surrounded by single quotation mark, like `'sylvester stallone'`.
 
 # +
-# list.index?
+import re
+
+# Dictionary of English Contractions
+contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
+                     "can't": "cannot","can't've": "cannot have",
+                     "'cause": "because","could've": "could have","couldn't": "could not",
+                     "couldn't've": "could not have", "didn't": "did not","doesn't": "does not",
+                     "don't": "do not","hadn't": "had not","hadn't've": "had not have",
+                     "hasn't": "has not","haven't": "have not","he'd": "he would",
+                     "he'd've": "he would have","he'll": "he will", "he'll've": "he will have",
+                     "how'd": "how did","how'd'y": "how do you","how'll": "how will",
+                     "i'd": "i would", "i'd've": "i would have","i'll": "i will",
+                     "i'll've": "i will have","i'm": "i am","i've": "i have", "isn't": "is not",
+                     "it'd": "it would","it'd've": "it would have","it'll": "it will",
+                     "it'll've": "it will have", "let's": "let us","ma'am": "madam",
+                     "mayn't": "may not","might've": "might have","mightn't": "might not", 
+                     "mightn't've": "might not have","must've": "must have","mustn't": "must not",
+                     "mustn't've": "must not have", "needn't": "need not",
+                     "needn't've": "need not have","o'clock": "of the clock","oughtn't": "ought not",
+                     "oughtn't've": "ought not have","shan't": "shall not","sha'n't": "shall not",
+                     "shan't've": "shall not have","she'd": "she would","she'd've": "she would have",
+                     "she'll": "she will", "she'll've": "she will have","should've": "should have",
+                     "shouldn't": "should not", "shouldn't've": "should not have","so've": "so have",
+                     "that'd": "that would","that'd've": "that would have", "there'd": "there would",
+                     "there'd've": "there would have", "they'd": "they would",
+                     "they'd've": "they would have","they'll": "they will",
+                     "they'll've": "they will have", "they're": "they are","they've": "they have",
+                     "to've": "to have","wasn't": "was not","we'd": "we would",
+                     "we'd've": "we would have","we'll": "we will","we'll've": "we will have",
+                     "we're": "we are","we've": "we have", "weren't": "were not","what'll": "what will",
+                     "what'll've": "what will have","what're": "what are", "what've": "what have",
+                     "when've": "when have","where'd": "where did", "where've": "where have",
+                     "who'll": "who will","who'll've": "who will have","who've": "who have",
+                     "why've": "why have","will've": "will have","won't": "will not",
+                     "won't've": "will not have", "would've": "would have","wouldn't": "would not",
+                     "wouldn't've": "would not have","y'all": "you all", "y'all'd": "you all would",
+                     "y'all'd've": "you all would have","y'all're": "you all are",
+                     "y'all've": "you all have", "you'd": "you would","you'd've": "you would have",
+                     "you'll": "you will","you'll've": "you will have", "you're": "you are",
+                     "you've": "you have"}
+
+# Regular expression for finding contractions
+#    adding positive lookbehind for `'s` in the regex to make sure a letter is preceeding
+contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()).lower().replace("|'s", "|(?<=[a-zA-Z])'s"))
+contractions_re
+
+# + tags=[]
+tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
+test=pd.read_csv('./input/nlp-getting-started/test.csv')
+
+
+# +
+# Function for expanding contractions
+# def expand_contractions(text, contractions_dict=contractions_dict):
+#     for match in contractions_re.findall(text):
+#     return contractions_re.sub(replace, text)
+def expand_contractions(text,contractions_dict=contractions_dict):
+    def replace(match):
+        return contractions_dict[match.group(1)]
+    return contractions_re.sub(replace, text)
+
+# Expanding Contractions in the reviews
+df = tweet.copy()
+df.loc[:, 'text']=df.loc[:, 'text'].apply(expand_contractions)
+
+# +
+# Print the ten first edited tweets
+
+i = 0
+j = 0
+while j < 10:
+    a = tweet.loc[i,'text']
+    b = df.loc[i,'text']
+    if (len(a) != len(b)):
+        print(a)
+        print(b)
+        j += 1
+    i += 1
 # -
 
-[(1,2), (3,4)].reverse
-
-# WORK IN PROGRESS:
-# - Create a function for removing repeated letters in words
-# - As a starting point, we create a function that converts  'goooaaaallls' to 'goals <elong>'
-# - Needs to iterate over all matches of repeated letters, and remove a combination of letters that results in a recognized word (check with a dictionary of known words)
-# - A recursive solution seems reasonable
+# ### Implementing a cleaning function for repeated letters
 
 # +
 # TODO: 
@@ -329,150 +427,249 @@ idx = 0
 import re
 
 
-word = "goooaaaallls"
+word = "goooaaaallls"  # We want to match go[oo]a[aaa]l[ll]s
 
 # Get list of matches: [(group1, group2, ...), ...] where match group 3 is the repeated letters
 m = re.findall(r"(\S*?)(\w)(\2{1,})(\S*?)", word)
-
-# Build list of matches
-matches = []
-while m:
-    matches.append = m.pop()[3] # Get the trailing letters from the current match
-    
-# Outer recursive function, call inner to get all matches, then try all combinations of removal
-def outer():
-    pass
-
-# Inner recursive function collecting all matches
-def inner(matches: list):
-    
-
-
-# Drop following implementation for a recursive solution
-# Iterate over matches
-for i, match in enumerate(m):
-    repeated_letters_1 = match[3]
-    if (cleaned = re.sub(repeated_letters_1, "", word) in ["goals", "blabla"]):
-        continue
-       
-    # Iterate over remaining matches
-    # TODO: Needs code for variable number of matches
-    for other_m in m.remove(match):
-        repeated_letters_2 = other_m[3]
-        if (cleaned = re.sub(repeated_letters_2, "", word) in ["goals", "blabla"]):
-        extra_words = m[3]
-
-# +
-import re
-
-X = [
-    u'goooooooaaaaaallll',
-		u'http://foo.com/blah_blah http://foo.com/blah_blah/ http://foo.com/blah_blah_(wikipedia) https://foo_bar.example.com/',
-		u':\\ :-/ =-( =`( )\'8 ]^;',
-		u':) :-] =`) (\'8 ;`)',
-		u':D :-D =`b d\'8 ;`P',
-		u':| 8|',
-		u'<3<3 <3 <3',
-		u'#swag #swa00-= #as ## #WOOP #Feeling_Blessed #helloWorld',
-		u'holy crap!! i won!!!!@@!!!',
-		u'holy *IUYT$)(crap!! @@#i@%#@ swag.lord **won!!!!@@!!! wahoo....!!!??!??? Im sick lol.',
-		u'this sentencE consisTS OF slAyYyyy slayyyyyy WEiRDd caPITalIZAtionn',
-	]
-
-def sub(pattern, output, string, whole_word=False):
-	token = output
-	if whole_word:
-		pattern = r'(\s|^)' + pattern + r'(\s|$)'
-
-	if isinstance(output, str):
-		token = ' ' + output + ' '
-	else:
-		token = lambda match: ' ' + output(match) + ' '
-
-	return re.sub(pattern, token, string)
-
-def hashtag(token):
-	token = token.group('tag')
-	if token != token.upper():
-		token = ' '.join(re.findall('[a-zA-Z][^A-Z]*', token))
-
-	return '<hashtag> ' + token + ' <endhashtag>'
-
-def punc_repeat(token):
-	return token.group(0)[0] + " <repeat>"
-
-def punc_separate(token):
-	return token.group()
-
-def number(token):
-	return token.group() + ' <number>';
-
-def word_end_repeat(token):
-	return token.group(1) + token.group(2) + ' <elong>'
-
-def word_repeat(token):
-    for token.group() + ' <elong>'
-
-eyes        = r"[8:=;]"
-nose        = r"['`\-\^]?"
-sad_front   = r"[(\[/\\]+"
-sad_back    = r"[)\]/\\]+"
-smile_front = r"[)\]]+"
-smile_back  = r"[(\[]+"
-lol_front   = r"[DbpP]+"
-lol_back    = r"[d]+"
-neutral     = r"[|]+"
-sadface     = eyes + nose + sad_front   + '|' + sad_back   + nose + eyes
-smile       = eyes + nose + smile_front + '|' + smile_back + nose + eyes
-lolface     = eyes + nose + lol_front   + '|' + lol_back   + nose + eyes
-neutralface = eyes + nose + neutral     + '|' + neutral    + nose + eyes
-punctuation = r"""[ '!"#$%&'()+,/:;=?@_`{|}~\*\-\.\^\\\[\]]+""" ## < and > omitted to avoid messing up tokens
-
-print("\n".join(X))
-print("\n ===== Conversion: =====")
-
-for tweet in X:
-	tweet = sub(r'[\s]+',                             '  ',            tweet) # ensure 2 spaces between everything
-	tweet = sub(r'(?:(?:https?|ftp)://|www\.)[^\s]+', '<url>',         tweet, True)
-	tweet = sub(r'@\w+',                              '<user>',        tweet, True)
-	tweet = sub(r'#(?P<tag>\w+)',                     hashtag,         tweet, True)
-	tweet = sub(sadface,                              '<sadface>',     tweet, True)
-	tweet = sub(smile,                                '<smile>',       tweet, True)
-	tweet = sub(lolface,                              '<lolface>',     tweet, True)
-	tweet = sub(neutralface,                          '<neutralface>', tweet, True)
-	tweet = sub(r'(?:<3+)+',                          '<heart>',       tweet, True)
-	tweet = tweet.lower()
-	tweet = sub(r'[-+]?[.\d]*[\d]+[:,.\d]*',          number,          tweet, True)
-	tweet = sub(punctuation,                          punc_separate,   tweet)
-	tweet = sub(r'([!?.])\1+',                        punc_repeat,     tweet)
-	tweet = sub(r'(\S*?)(\w)\2+\b',                   word_end_repeat, tweet)
-# 	tweet = sub(r'(\S*?)(\w*(\w)\2+\w*)\2+\b',                   word_repeat, tweet)
-
-	tweet = tweet.split()
-	print(' '.join(tweet))
-
+m
 # -
 
-# ## Acronyms and joined words in tweets
-# Many tweets contain acronyms and joined words, such as #arianagrande. These will not have a pre-trained embedding.
-# We could
-# - Check out "a la carte embeddings" (https://arxiv.org/abs/1805.05388)
-# - https://www.reddit.com/r/LanguageTechnology/comments/g4r39s/whats_the_simplest_way_to_generate_word_vectors/
-#   - "You can use Magnitude (open source vector embedding library) to automatically handle out of vocabulary words for FastText, word2vec, GloVe, or ELMo" (https://github.com/plasticityai/magnitude)
-# - Ignore them, and hope they are not important for disaster tweet prediction.
-# - Code each unknown word as <unk>. Maybe usage of a word that is not in a common dictionary is predictive for disaster tweets.
-# - Fine tune the string embeddings on our tweets.
+repeated_letters = [match[2] for match in m]
+repeated_letters
 
-tweet.text[5968]
+# +
+from itertools import combinations
 
-tweet.text[6533]
+# Loop over all combinations of repeated letters
+print(f"{'Cleaned word':12s} - Removed letters")
+print("=============================")
+for i in range(len(repeated_letters), 0, -1):
+    for combination in combinations(repeated_letters, r=i+1):
+        tword = word
+        for letters in combination:
+            tword = re.sub(letters, "", tword)
+        print(f"{tword:14s}{combination}")
+# -
+
+# ### Cleaning function for tweets
+
+# +
+from itertools import combinations
+
+def clean_tweets(df):
+    import re
+
+    def sub(pattern, output, string, whole_word=False):
+        token = output
+        if whole_word:
+            pattern = r'(\s|^)' + pattern + r'(\s|$)'
+
+        if isinstance(output, str):
+            token = ' ' + output + ' '
+        else:
+            token = lambda match: ' ' + output(match) + ' '
+
+        return re.sub(pattern, token, string)
+
+
+    def hashtag(token):
+        """ Replace hashtag `#` with `<hashtag>` and split following joined words."""
+        token = token.group('tag')
+        if token != token.upper():
+            token = ' '.join(re.findall('[a-zA-Z][^A-Z]*', token))
+
+        return '<hashtag> ' + token
+
+    def punc_repeat(token):
+        return token.group(0)[0] + " <repeat>"
+
+    def punc_separate(token):
+        return token.group()
+
+    def number(token):
+        return token.group() + ' <number>';
+
+    def word_end_repeat(token):
+        return token.group(1) + token.group(2) + ' <elong>'
+    
+    def allcaps(token):
+        return token.group() + ' <allcaps>'
+
+    def clean_repeated_letters(tweet: str, embedding_dict: dict):
+        """
+        Splits a tweet into words, finds repeated letters in the word and
+        removes combinations of the repeated letters until the word is matched by a key in
+        embedding_dict
+        """
+
+        cleaned_tweet = []
+
+        for word_i in tweet.split():
+            word_found = False
+            if word_i in embedding_dict:
+                cleaned_tweet.append(word_i)
+                continue
+
+            matches = re.findall(r"""(\S*?)    # 1: Optional preceeding letters
+                                     (\w)      # 2: A letter that might be repeated
+                                     (\2{1,})  # 3: Repetead instances of the preceeding letter (group 2)
+                                     (\S*?)    # 4: Optional trailing letters""",
+                                 word_i,
+                                 flags=re.X)  # Verbose regex, for commenting
+                                 
+            repeated_letters = [match[2] for match in matches]
+                    
+            # Loop over all combinations of repeated letters
+            for i in range(len(repeated_letters), 0, -1):  # i decides length of combination
+                if word_found:
+                    continue
+                    
+                for combination in combinations(repeated_letters, r = i):
+                    if word_found:
+                        continue
+                        
+                    tword = word_i 
+                    
+                        
+                    for letters in combination:
+                        tword = re.sub(letters, "", tword, count=1)
+                                        
+                        # Word in the embedding dict?
+                        if (tword in embedding_dict):
+                            # Keep the word and stop searching
+                            word_found = True
+                            tword = tword + " <elong>"
+                            continue  
+            if not word_found:
+                # No match, we simply keep the word
+                tword = word_i
+                
+            cleaned_tweet.append(tword)
+            
+        return " ".join(cleaned_tweet)
+
+
+
+    eyes        = r"[8:=;]"
+    nose        = r"['`\-\^]?"
+    sad_front   = r"[(\[/\\]+"
+    sad_back    = r"[)\]/\\]+"
+    smile_front = r"[)\]]+"
+    smile_back  = r"[(\[]+"
+    lol_front   = r"[DbpP]+"
+    lol_back    = r"[d]+"
+    neutral     = r"[|]+"
+    sadface     = eyes + nose + sad_front   + '|' + sad_back   + nose + eyes
+    smile       = eyes + nose + smile_front + '|' + smile_back + nose + eyes
+    lolface     = eyes + nose + lol_front   + '|' + lol_back   + nose + eyes
+    neutralface = eyes + nose + neutral     + '|' + neutral    + nose + eyes
+    punctuation = r"""[ '!"#$%&'()+,/:;=?@_`{|}~\*\-\.\^\\\[\]]+""" ## < and > omitted to avoid messing up tokens
+
+    for i in range(df.shape[0]):
+        df.loc[i,'text'] = sub(r'[\s]+',                             '  ',            df.loc[i,'text']) # ensure 2 spaces between everything
+        df.loc[i,'text'] = sub(r'(?:(?:https?|ftp)://|www\.)[^\s]+', '<url>',         df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(r'@\w+',                              '<user>',        df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(r'#(?P<tag>\w+)',                     hashtag,         df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(sadface,                              '<sadface>',     df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(smile,                                '<smile>',       df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(lolface,                              '<lolface>',     df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(neutralface,                          '<neutralface>', df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(r'(?:<3+)+',                          '<heart>',       df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(r'\b[A-Z]+\b',                         allcaps,       df.loc[i,'text'], True) 
+        # Allcaps tag
+        df.loc[i,'text'] = df.loc[i,'text'].lower()
+        df.loc[i,'text'] = expand_contractions(df.loc[i, 'text'])
+        df.loc[i,'text'] = sub(r'[-+]?[.\d]*[\d]+[:,.\d]*',          number,          df.loc[i,'text'], True)
+        df.loc[i,'text'] = sub(punctuation,                          punc_separate,   df.loc[i,'text'])
+        df.loc[i,'text'] = sub(r'([!?.])\1+',                        punc_repeat,     df.loc[i,'text'])
+#     df.loc[i,'text'] = sub(r'(\S*?)(\w)\2+\b',                   word_end_repeat, df.loc[i,'text'])
+        
+        df.loc[i,'text'] = clean_repeated_letters(df.loc[i,'text'], embedding_dict)
+#     tweet = sub(r"(\S*?)(\w)(\2{1,})(\S*?)",          word_repeat,     tweet)
+#     tweet = sub(r'(\S*?)(\w*(\w)\2+\w*)\2+\b',                   word_repeat, tweet)
+    return df
+# -
+
+
+# #### Test the cleaning function
+# We test the cleaning on some text to see the effect.
+
+# +
+temp = pd.DataFrame({"text": [
+    u"I'm hoping they're helping, they've got to",
+    u'goooooooaaaaaallll, hey its a goall gooal',
+    u'http://foo.com/blah_blah http://foo.com/blah_blah/ http://foo.com/blah_blah_(wikipedia) https://foo_bar.example.com/',
+    u':\\ :-/ =-( =`( )\'8 ]^; -.- :/',
+    u':) :-] =`) (\'8 ;`)',
+    u':D :-D =`b d\'8 ;`P',
+    u':| 8|',
+    u'<3<3 <3 <3',
+    u'#swag #swa00-= #as ## #WOOP #Feeling_Blessed #helloWorld',
+    u'holy crap!! i won!!!!@@!!!',
+    u'holy *IUYT$)(crap!! @@#i@%#@ swag.lord **won!!!!@@!!! wahoo....!!!??!??? Im sick lol.',
+    u'this SENTENCE consisTS OF slAyYyyy slayyyyyy #WEIRD caPITalIZAtionn',
+    ]})
+temp_uncleaned = temp.copy()
+clean_tweets(df = temp)
+
+for i in range(temp.shape[0]):
+#     print("====================")
+    print("Original: ", temp_uncleaned.iloc[i].text)
+    print("Cleaned:  ", temp.iloc[i].text)
+
+
+# + [markdown] tags=[]
+# ---
+# ### Cleaning and checking embedding coverage
+
+# + tags=[]
+tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
+test=pd.read_csv('./input/nlp-getting-started/test.csv')
+# -
+
+tweet.head()
+
+
+clean_tweets(tweet)
+
+tweet.head()
+
+uq_words = tweet.text.str.split(expand=True).stack().unique()
+n_covered, not_covered = word_representation(word_dict = embedding_dict, word_list = uq_words)
+unused_words = get_unused_words(word_dict = embedding_dict, word_list = uq_words)
+
+#  
+
+# Now 82% of the words in our data are in the embedding dictionary.
+
+n_covered/len(uq_words)
+
+#  
+
+# Still only 1% of the words in the embedding dictionary is used.
+
+n_covered/len(embedding_dict)
+
+#  
+
+# The words not covered by the embedding dictionary seem to be joined words such as `myreligion` many uncommon symbols and words and numbers. Hopefully these do not carry much meaning, and as they are uncommon it will be hard for our model to descipher their meaning.
+
+# Words  in our data not in the embedding dictionary
+"  ".join(not_covered[0:100])
+
+# ---
+# Unused words from the embedding dictionary are mainly symbols and foreign words. Which means we seem to have captured most of the important meaning-bearing words.
+
+# Unused words in the embedding dictionary
+"  ".join(unused_words[0:100])
 
 tweet.text[tweet.text.str.match(r".*jonvoyage")]
 
 # # Spell correction
 
-# !pip install pyspellchecker
-# # !conda install -c conda-forge pyspellchecker
+# +
+# # !pip install pyspellchecker
+# -
 
 from spellchecker import SpellChecker
 
@@ -515,22 +712,6 @@ def correct_spellings(text):
 # # Preparing the data
 # We need to convert the text to sequences as input to the model
 
-# ## Saving objects
-# We create some reuseable code for saving objects for later use, so we don't have to re-run time consuming code.
-
-# +
-import pickle
-def save_obj(obj, name ):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def load_obj(name ):
-    with open('obj/' + name + '.pkl', 'rb') as f:
-        return pickle.load(f)
-
-
-# -
-
 # ## Corpus
 # We first create a corpus, removing stop words
 # - TODO: Try keeping stopwords
@@ -558,14 +739,14 @@ save_obj(corpus, "corpus")
 
 corpus = load_obj("corpus")
 
-# ### Tokenization
+# ## Tokenization
 # We tokenize the tweets using helper functions from `keras`
 
+# +
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 tokenizer_object = Tokenizer()
 
-# +
 # Tokenize the words in the corpus
 tokenizer_object.fit_on_texts(corpus)
 
@@ -579,22 +760,22 @@ tweet_pad = pad_sequences(sequences, maxlen=MAX_LEN, truncating='pre', padding='
 # Save the tokenizer object
 save_obj(tokenizer_object, "tokenizer_object")
 save_obj(tweet_pad, "tweet_pad")
-# -
 
 # Load previously created tokenizer
 tokenizer_object = load_obj("tokenizer_object")
 tweet_pad = load_obj("tweet_pad")
+# -
 
-# ### Create embedding matrix
+# ## Create embedding matrix
 # We create the embedding matrix, where each row is a pre-trained word embedding vector from the GloVe dictionary, and where row index coincides with the word token.
 #
 
 # - TODO:For the index in the matrix to match the word tokens the embedding_matrix is padded with an initial row of zeros because tokenization starts at 1, while python list index starts at 0
 
+# +
 word_index = tokenizer_object.word_index
 num_words = len(word_index) + 1
 
-# +
 # embedding_matrix = np.zeros((num_words, 100))
 
 # for word,i in tqdm(word_index.items(), total = len(word_index.items())):
@@ -603,11 +784,11 @@ num_words = len(word_index) + 1
 #         embedding_matrix[i,:]=emb_vec
 
 # save_obj(embedding_matrix, "embedding_matrix")
-# -
 
 embedding_matrix = load_obj("embedding_matrix")
+# -
 
-# ## We initialize the embedding layer for the model
+# ## Initialize embedding layer
 # The embedding layer is a flexible layer that can be used in a variety of ways:
 # - It can be used alone to learn a word embedding that can be saved and used in another model later.
 # - It can be used as part of a deep learning model where the embedding is learned along with the model itself.
@@ -626,14 +807,6 @@ embedding = Embedding(input_dim  = num_words,
                      )
 # -
 
-# TODO: 
-# - mask_zero in Embedding?
-# - Train embeddings on our corpus.
-
-# + tags=[]
-# # !pip install tensorflow  # tensorflog-cpu for laptop withoug gpu
-# -
-
 # # Model creation
 # We now create our model
 
@@ -647,10 +820,10 @@ from keras.layers import LSTM, Dense, SpatialDropout1D
 # +
 model = Sequential()
 model.add(embedding)
-model.add(SpatialDropout1D(0.2))  # Dropout to reduce overfitting.
+model.add(SpatialDropout1D(0.8))  # Dropout to reduce overfitting.
 model.add(LSTM(64,
-               dropout=0.5,  # Fraction of the units to drop for the linear transformation of the inputs.
-               recurrent_dropout=0.5  # Fraction of the units to drop for the linear transformation of the recurrent state.
+               dropout=0.25,  # Fraction of the units to drop for the linear transformation of the inputs.
+               recurrent_dropout=0.25  # Fraction of the units to drop for the linear transformation of the recurrent state.
               ))
 model.add(Dense(1, activation='sigmoid'))
 
@@ -664,12 +837,13 @@ model.summary()
 # We choose test set size to be 15 % of the data, the remaining 85 % is used for training.
 
 # +
+from sklearn.model_selection import train_test_split
+
 #We split our data sequences back into the original training and test data.
 train_data = tweet_pad[:7613, :]
 test_data = tweet_pad[7613:, :]
 
 # We split the training data into a training and test set for the model fitting
-from sklearn.model_selection import train_test_split
 x_train, x_val, y_train, y_val = train_test_split(train_data,
                                                     tweet['target'].values,
                                                     test_size=0.15)
@@ -690,9 +864,6 @@ history = model.fit(x_train, y_train,
 
 # Save the fitted model to a file
 model.save('./obj/')
-# -
-
-# The model seems to overfit the data.
 
 # +
 # Loading the fitted model from file:
@@ -705,6 +876,7 @@ axes = sns.lineplot(data=pd.DataFrame(history.history)[["accuracy", "loss"]])
 
 axes = sns.lineplot(data=pd.DataFrame(history.history)[["val_accuracy", "val_loss"]])
 
+# ---
 # Accuracy and loss seem to decrease on the validation set. This does not bode well.
 
 # ## TODO
@@ -731,18 +903,6 @@ predictions = model.predict(test_data)
 # - End-To-End Memory Networks: https://github.com/carpedm20/MemN2N-tensorflow
 # - Adaptive Computation Time algorithm https://github.com/DeNeutoy/act-tensorflow
 
-# ## Saving the notebook environment variables
-
-# +
-# Saving environment
-import dill
-# save
-dill.dump_session('notebook_env.db')
-
-# load
-dill.load_session('notebook_env.db')
-# -
-
 # ## Split joined words
 
 " ".join(re.findall('[A-Z][^A-Z]*', "HeiOgHaa"))
@@ -760,80 +920,3 @@ import itertools
 # + jupyter={"outputs_hidden": true} tags=[]
 from nltk.corpus import stopwords
 print(stopwords.words('english'))
-# -
-
-# ## Remove contractions
-# Copied from https://www.analyticsvidhya.com/blog/2020/04/beginners-guide-exploratory-data-analysis-text-data/
-
-# +
-# Dictionary of English Contractions
-contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
-                     "can't": "cannot","can't've": "cannot have",
-                     "'cause": "because","could've": "could have","couldn't": "could not",
-                     "couldn't've": "could not have", "didn't": "did not","doesn't": "does not",
-                     "don't": "do not","hadn't": "had not","hadn't've": "had not have",
-                     "hasn't": "has not","haven't": "have not","he'd": "he would",
-                     "he'd've": "he would have","he'll": "he will", "he'll've": "he will have",
-                     "how'd": "how did","how'd'y": "how do you","how'll": "how will",
-                     "I'd": "I would", "I'd've": "I would have","I'll": "I will",
-                     "I'll've": "I will have","I'm": "I am","I've": "I have", "isn't": "is not",
-                     "it'd": "it would","it'd've": "it would have","it'll": "it will",
-                     "it'll've": "it will have", "let's": "let us","ma'am": "madam",
-                     "mayn't": "may not","might've": "might have","mightn't": "might not", 
-                     "mightn't've": "might not have","must've": "must have","mustn't": "must not",
-                     "mustn't've": "must not have", "needn't": "need not",
-                     "needn't've": "need not have","o'clock": "of the clock","oughtn't": "ought not",
-                     "oughtn't've": "ought not have","shan't": "shall not","sha'n't": "shall not",
-                     "shan't've": "shall not have","she'd": "she would","she'd've": "she would have",
-                     "she'll": "she will", "she'll've": "she will have","should've": "should have",
-                     "shouldn't": "should not", "shouldn't've": "should not have","so've": "so have",
-                     "that'd": "that would","that'd've": "that would have", "there'd": "there would",
-                     "there'd've": "there would have", "they'd": "they would",
-                     "they'd've": "they would have","they'll": "they will",
-                     "they'll've": "they will have", "they're": "they are","they've": "they have",
-                     "to've": "to have","wasn't": "was not","we'd": "we would",
-                     "we'd've": "we would have","we'll": "we will","we'll've": "we will have",
-                     "we're": "we are","we've": "we have", "weren't": "were not","what'll": "what will",
-                     "what'll've": "what will have","what're": "what are", "what've": "what have",
-                     "when've": "when have","where'd": "where did", "where've": "where have",
-                     "who'll": "who will","who'll've": "who will have","who've": "who have",
-                     "why've": "why have","will've": "will have","won't": "will not",
-                     "won't've": "will not have", "would've": "would have","wouldn't": "would not",
-                     "wouldn't've": "would not have","y'all": "you all", "y'all'd": "you all would",
-                     "y'all'd've": "you all would have","y'all're": "you all are",
-                     "y'all've": "you all have", "you'd": "you would","you'd've": "you would have",
-                     "you'll": "you will","you'll've": "you will have", "you're": "you are",
-                     "you've": "you have"}
-
-# Regular expression for finding contractions
-contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()))
-
-# Function for expanding contractions
-def expand_contractions(text,contractions_dict=contractions_dict):
-  def replace(match):
-    return contractions_dict[match.group(0)]
-  return contractions_re.sub(replace, text)
-
-# Expanding Contractions in the reviews
-df['reviews.text']=df['reviews.text'].apply(lambda x:expand_contractions(x))
-# -
-
-# ## Keywords
-# We now focus on tweets of selected keywords
-
-# ### Most used words in the fatalities keyword category
-
-# +
-selected_tweets = tweet[tweet.keyword == "fatalities"]
-
-# list of words in selected tweets
-list_of_words = [re.sub("", "", x).lower().split() for x in selected_tweets.text]
-
-# Flatten nested lists
-list_of_words = [item for sublist in list_of_words for item in sublist]
-# -
-
-pd.DataFrame({"words":list_of_words}).words.value_counts().head(20)
-
-
-WordCloud(height=600, width=600, max_words=200).generate(",".join(list_of_words)).to_image()
