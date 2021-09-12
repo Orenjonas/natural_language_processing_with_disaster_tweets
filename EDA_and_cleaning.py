@@ -28,6 +28,9 @@
 # - Text cleaning
 #   - A general text cleanin method for analysis
 #   - Text cleaning specific for the GloVe embeddings
+#  
+# ## Thoughts
+# - Separate model for each keyword in the data?
 
 # # Imports
 
@@ -78,12 +81,12 @@ test  = pd.read_csv('./input/nlp-getting-started/test.csv')
 print(tweet.shape)
 print(test.shape)
 
-# The training data rows contain a `keyword`, a `location` (sometimes not present), `text` containg a tweet and a `target` coding 1 for disaster and 0 for non-disaster.
-#
 # The training data contains 7613 observations, while the test data contains 3263 observations.
 
 tweet.iloc[200:203]
 
+# The training data rows contain a `keyword`, a `location` (sometimes not present), `text` containg a tweet and a `target` coding 1 for disaster and 0 for non-disaster.
+#
 # At first glance location does not seem trustworthy.
 
 # By inspecting a few tweets we see that we need to clean the text before we can analyze it.
@@ -102,34 +105,27 @@ for i in [677, 2643, 3134, 92, 2290, 2062, 3681, 2343, 2384, 323]:
 # - Many tweets have date tags, such as "8/6/2015@2:09 PM:"
 
 # ## Keywords
-# The keyword column contain an important keyword present in the tweet, such as "sinking".
+# The keyword column contain an important keyword present in the tweet, such as "sinking", as presented below.
 
 tweet[tweet['keyword']=='sinking'][["text", "target"]].head(10)
 
-# It looks like I found a contradiction in the dataset:
-
-for i in [6091, 6094]:
-    print("\n-Target: ",tweet.iloc[i].target)
-    print("-Tweet: \n", tweet.iloc[i].text)
-
-# TODO: 
-# - Inspect if there are many of these
-#   - Find number of duplicate tweets
+# ## Drop duplicates
+# 110 tweets in the dataset have/are duplicates. Some have contradictory labelling. We drop the duplicates, as there are few compared to the data size.
 
 # + tags=[]
-tweet.nunique()
+np.sum(tweet.duplicated(subset=['text']))
+
+# + tags=[]
+tweet.drop_duplicates(subset=['text'], inplace=True)
+# -
+
+# ## Check dataset balance
+# The dataset appears to be fairly balanced
 
 # + tags=[]
 value_dist = tweet.target.value_counts()
 
 sns.barplot(x=value_dist.index, y=value_dist)
-plt.show()
-
-# + tags=[]
-tw_len = tweet.text.str.len()
-
-dta = {k:v for (k,v) in zip(["Disaster", "Non-disaster"], [tw_len[tweet.target==i] for i in [0,1]])}
-sns.histplot(dta)
 plt.show()
 # -
 
@@ -211,19 +207,19 @@ def get_num_lines(file_path: str):
 
 
 # +
-# # Run this once to save an embedding dictionary to a file in and obj/ folder in current dir (`obj` dir must be created beforehand)
+# Run this once to save an embedding dictionary to a file in and obj/ folder in current dir (`obj` dir must be created beforehand)
 
-# embedding_dict={}
-# file_path = './input/glove.twitter.27B.100d.txt'
-# with open(file_path,'r') as f:
-#     for line in tqdm(f, total = get_num_lines(file_path)):
-#         values=line.split()
-#         word=values[0]
-#         vectors=np.asarray(values[1:],'float32')
-#         embedding_dict[word]=vectors
-# f.close()
+embedding_dict={}
+file_path = './input/glove.twitter.27B.100d.txt'
+with open(file_path,'r') as f:
+    for line in tqdm(f, total = get_num_lines(file_path)):
+        values=line.split()
+        word=values[0]
+        vectors=np.asarray(values[1:],'float32')
+        embedding_dict[word]=vectors
+f.close()
 
-# save_obj(embedding_dict, "embedding_dict")
+save_obj(embedding_dict, "embedding_dict")
 # -
 
 # Load saved embedding dictionary from previous cell
@@ -311,9 +307,6 @@ uq_words = tweet.text.str.split(expand=True).stack().unique()
 n_covered, not_covered = word_representation(word_dict = embedding_dict, word_list = uq_words)
 unused_words = get_unused_words(word_dict = embedding_dict, word_list = uq_words)
 
-# - Emojis have an embedding and might encode and important meaning in the tweets
-# - There seems to be <user>, <hashtag>, <url> and <number> placeholders
-
 # Checking the coverage of the tweets, we see that only 56% of the words in our data are in the embedding dictionary.
 
 n_covered/len(uq_words)
@@ -335,10 +328,10 @@ n_covered/len(embedding_dict)
 #
 # In an [issue thread](https://github.com/stanfordnlp/GloVe/issues/107) discussing text pre-processing for tweets on their Github page user [skondrashov](https://github.co/skondrashov) supplies a useful python conversion of this ruby script, that also illustrates how words are adjusted to fit in a standard dictionary, and tagged for special characters or rewritings, such as being prefixed with a hashtag or elongated.
 
-# ## Remove contractions
+# ### Remove contractions
 # Copied from https://www.analyticsvidhya.com/blog/2020/04/beginners-guide-exploratory-data-analysis-text-data/, with a small tweak for not matching `'s` in words surrounded by single quotation mark, like `'sylvester stallone'`.
 
-# +
+# + jupyter={"outputs_hidden": true} tags=[]
 import re
 
 # Dictionary of English Contractions
@@ -383,7 +376,6 @@ contractions_dict = { "ain't": "are not","'s":" is","aren't": "are not",
 # Regular expression for finding contractions
 #    adding positive lookbehind for `'s` in the regex to make sure a letter is preceeding
 contractions_re=re.compile('(%s)' % '|'.join(contractions_dict.keys()).lower().replace("|'s", "|(?<=[a-zA-Z])'s"))
-contractions_re
 
 # + tags=[]
 tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
@@ -391,10 +383,6 @@ test=pd.read_csv('./input/nlp-getting-started/test.csv')
 
 
 # +
-# Function for expanding contractions
-# def expand_contractions(text, contractions_dict=contractions_dict):
-#     for match in contractions_re.findall(text):
-#     return contractions_re.sub(replace, text)
 def expand_contractions(text,contractions_dict=contractions_dict):
     def replace(match):
         return contractions_dict[match.group(1)]
@@ -409,7 +397,7 @@ df.loc[:, 'text']=df.loc[:, 'text'].apply(expand_contractions)
 
 i = 0
 j = 0
-while j < 10:
+while j < 5:
     a = tweet.loc[i,'text']
     b = df.loc[i,'text']
     if (len(a) != len(b)):
@@ -419,7 +407,7 @@ while j < 10:
     i += 1
 # -
 
-# ### Implementing a cleaning function for repeated letters
+# ### Cleaning function for repeated letters
 
 # +
 # TODO: 
@@ -627,13 +615,6 @@ tweet= pd.read_csv('./input/nlp-getting-started/train.csv')
 test=pd.read_csv('./input/nlp-getting-started/test.csv')
 # -
 
-tweet.head()
-
-
-clean_tweets(tweet)
-
-tweet.head()
-
 uq_words = tweet.text.str.split(expand=True).stack().unique()
 n_covered, not_covered = word_representation(word_dict = embedding_dict, word_list = uq_words)
 unused_words = get_unused_words(word_dict = embedding_dict, word_list = uq_words)
@@ -709,209 +690,15 @@ def correct_spellings(text):
 
 # - TODO implement into the data cleaning
 
-# # Preparing the data
-# We need to convert the text to sequences as input to the model
-
-# ## Corpus
-# We first create a corpus, removing stop words
-# - TODO: Try keeping stopwords
-
-def create_corpus(text: pd.core.series.Series):
-    """
-    Creates a corpus while filtering out stop words and non-alphanumeric words
-    """
-    
-    from nltk.tokenize import word_tokenize  # Tokenize words
-    
-    stop=set(stopwords.words('english'))
-    corpus = []
-    for tw in tqdm(text):   # For loop with progress bar
-        words = [word for word in word_tokenize(tw) if ((word.isalpha()) & (not word in stop))]
-        corpus.append(words)
-    return corpus
-
-
-# We create a corpus from the training and test dataset. We will later split the data back into training and test data using the correct index.
-
-# We create a corpus from the training and test dataset. We will later split the data back into training and test data using the correct index.
-corpus = create_corpus(tweet.text.append(test.text))
-save_obj(corpus, "corpus")
-
-corpus = load_obj("corpus")
-
-# ## Tokenization
-# We tokenize the tweets using helper functions from `keras`
-
-# +
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-tokenizer_object = Tokenizer()
-
-# Tokenize the words in the corpus
-tokenizer_object.fit_on_texts(corpus)
-
-# Create sequences from the text in the corpus. The words are now coded to numbers.
-sequences = tokenizer_object.texts_to_sequences(corpus)
-
-# We pad the tweets so that the model has input of equal length. Padding the start of text sequences seems to be the most widely used.
-MAX_LEN = 50
-tweet_pad = pad_sequences(sequences, maxlen=MAX_LEN, truncating='pre', padding='pre')
-
-# Save the tokenizer object
-save_obj(tokenizer_object, "tokenizer_object")
-save_obj(tweet_pad, "tweet_pad")
-
-# Load previously created tokenizer
-tokenizer_object = load_obj("tokenizer_object")
-tweet_pad = load_obj("tweet_pad")
-# -
-
-# ## Create embedding matrix
-# We create the embedding matrix, where each row is a pre-trained word embedding vector from the GloVe dictionary, and where row index coincides with the word token.
-#
-
-# - TODO:For the index in the matrix to match the word tokens the embedding_matrix is padded with an initial row of zeros because tokenization starts at 1, while python list index starts at 0
-
-# +
-word_index = tokenizer_object.word_index
-num_words = len(word_index) + 1
-
-# embedding_matrix = np.zeros((num_words, 100))
-
-# for word,i in tqdm(word_index.items(), total = len(word_index.items())):
-#     emb_vec=embedding_dict.get(word)
-#     if emb_vec is not None:
-#         embedding_matrix[i,:]=emb_vec
-
-# save_obj(embedding_matrix, "embedding_matrix")
-
-embedding_matrix = load_obj("embedding_matrix")
-# -
-
-# ## Initialize embedding layer
-# The embedding layer is a flexible layer that can be used in a variety of ways:
-# - It can be used alone to learn a word embedding that can be saved and used in another model later.
-# - It can be used as part of a deep learning model where the embedding is learned along with the model itself.
-# - It can be used to load a pre-trained word embedding model, a type of transfer learning.
-#
-
-# +
-from keras.layers import Embedding
-from keras.initializers import Constant
-
-embedding = Embedding(input_dim  = num_words,
-                      output_dim = 100,
-                      embeddings_initializer = Constant(embedding_matrix),
-                      input_length = MAX_LEN,
-                      mask_zero = True,  # Boolean, whether or not the input value 0 is a special "padding" value that should be masked out.
-                     )
-# -
-
-# # Model creation
-# We now create our model
-
-from keras.models import Sequential
-from keras.layers import LSTM, Dense, SpatialDropout1D
-
-# ## Building the model
-# We then set up our model
-# - TODO: What type of dropout to apply? (see discussion here https://github.com/keras-team/keras/issues/7290)
-
-# +
-model = Sequential()
-model.add(embedding)
-model.add(SpatialDropout1D(0.8))  # Dropout to reduce overfitting.
-model.add(LSTM(64,
-               dropout=0.25,  # Fraction of the units to drop for the linear transformation of the inputs.
-               recurrent_dropout=0.25  # Fraction of the units to drop for the linear transformation of the recurrent state.
-              ))
-model.add(Dense(1, activation='sigmoid'))
-
-model.compile(loss='binary_crossentropy', optimizer="adam", metrics=['accuracy'])
-# -
-
-model.summary()
-
-# ## Split into training and test set
-# We split the training data into a training and test set for model optimization.
-# We choose test set size to be 15 % of the data, the remaining 85 % is used for training.
-
-# +
-from sklearn.model_selection import train_test_split
-
-#We split our data sequences back into the original training and test data.
-train_data = tweet_pad[:7613, :]
-test_data = tweet_pad[7613:, :]
-
-# We split the training data into a training and test set for the model fitting
-x_train, x_val, y_train, y_val = train_test_split(train_data,
-                                                    tweet['target'].values,
-                                                    test_size=0.15)
-print('Shape of train',x_train.shape)
-print("Shape of Validation ",x_val.shape)
-# -
-
-# # Training the model
-
-# +
-# # %%time
-
-history = model.fit(x_train, y_train,
-                    batch_size=16,
-                    epochs=9,
-                    validation_data=(x_val, y_val),
-                    verbose=2)
-
-# Save the fitted model to a file
-model.save('./obj/')
-
-# +
-# Loading the fitted model from file:
-
-from tensorflow import keras
-model = keras.models.load_model('./obj/')
-# -
-
-axes = sns.lineplot(data=pd.DataFrame(history.history)[["accuracy", "loss"]])
-
-axes = sns.lineplot(data=pd.DataFrame(history.history)[["val_accuracy", "val_loss"]])
-
-# ---
-# Accuracy and loss seem to decrease on the validation set. This does not bode well.
-
-# ## TODO
-# - Inspect misclassified tweets
-# - Compare to pretrained CNN
-# - Try larger word embedding
-# - Experiment with dropout
-
-# ## Misclassified tweets
-
-predictions = model.predict(test_data)
-
 # # TODO
 # - Remove non words
 # - encode urls?
 # - Encode complexity of text: https://pypi.org/project/textstat/
-# - Removal of stop words (library for specific language)
+# - Removal of stop words? (library for specific language)
 # - Remove URL's
 # - Spelling/grammar correction?
 #   - Companies like Google and Microsoft have achieved a decent accuracy level in automated spell correction. One can use algorithms like the Levenshtein Distances, Dictionary Lookup etc. or other modules and packages to fix these errors.
 #   - Number of misspelled words
-
-# - Try Neural Turing Machine (attention): https://github.com/carpedm20/NTM-tensorflow
-# - End-To-End Memory Networks: https://github.com/carpedm20/MemN2N-tensorflow
-# - Adaptive Computation Time algorithm https://github.com/DeNeutoy/act-tensorflow
-
-# ## Split joined words
-
-" ".join(re.findall('[A-Z][^A-Z]*', "HeiOgHaa"))
-
-# ## Remove duplicate letters
-# Needs improvements
-
-import itertools
-''.join(''.join(s)[:2] for _, s in itertools.groupby("I loooove you!"))
 
 # # Remove stopwords
 # We can use NLTK to remove common words.
