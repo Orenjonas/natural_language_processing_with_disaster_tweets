@@ -1,5 +1,7 @@
 # Natural language processing with disaster tweets
 
+The notebook performing data cleaning and analysis using a pretrained RoBERTa model can be seen [here](https://github.com/Orenjonas/natural_language_processing_with_disaster_tweets/blob/main/NLP_disaster_tweets_using_torch_RoBERTa.ipynb).
+
 ## Purpose
 The purpose of this project is to learn the basics of implementing machine learning algorithms for natural
 language processing, and catching up on the state of the art in the field.
